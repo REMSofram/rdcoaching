@@ -93,13 +93,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Créer un compte</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ou{' '}
-            <Link href="/auth/login" className="font-medium text-primary hover:text-primary/80">
-              connectez-vous à votre compte
-            </Link>
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900">Créer un compte</h2>
         </div>
 
         {error && (
@@ -128,7 +122,7 @@ export default function SignupPage() {
                   type="text"
                   autoComplete="given-name"
                   required
-                  className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                  className="relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
                   placeholder="Prénom"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -144,7 +138,7 @@ export default function SignupPage() {
                   type="text"
                   autoComplete="family-name"
                   required
-                  className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                  className="relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
                   placeholder="Nom"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -153,16 +147,16 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email" className="sr-only">
                 Adresse email
               </label>
               <input
-                id="email-address"
+                id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
                 placeholder="Adresse email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -179,7 +173,7 @@ export default function SignupPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
                 placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -196,7 +190,7 @@ export default function SignupPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
                 placeholder="Confirmer le mot de passe"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -204,41 +198,57 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              J'accepte les{' '}
-              <a href="#" className="font-medium text-primary hover:text-primary/80">
-                conditions d'utilisation
-              </a>{' '}
-              et la{' '}
-              <a href="#" className="font-medium text-primary hover:text-primary/80">
-                politique de confidentialité
-              </a>
-            </label>
+          <div className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor="terms" className="text-gray-600">
+                J'accepte les{' '}
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                  conditions d'utilisation
+                </a>{' '}
+                et la{' '}
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                  politique de confidentialité
+                </a>
+              </label>
+            </div>
           </div>
 
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
             >
               {isLoading ? 'Création du compte...' : 'Créer un compte'}
             </button>
           </div>
         </form>
 
-        <div className="text-center text-sm text-gray-600">
-          <p>
-            En vous inscrivant, vous acceptez nos conditions d'utilisation et notre politique de
-            confidentialité.
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Vous avez déjà un compte ?{' '}
+            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+              Connectez-vous
+            </Link>
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            En vous inscrivant, vous acceptez nos{' '}
+            <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+              Conditions d'utilisation
+            </a>{' '}
+            et notre{' '}
+            <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+              Politique de confidentialité
+            </a>
           </p>
         </div>
       </div>

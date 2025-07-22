@@ -20,6 +20,11 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/coach/dashboard', request.url));
       }
       
+      // Si un paramètre next est fourni, l'utiliser pour la redirection
+      if (next && next !== '/onboarding') {
+        return NextResponse.redirect(new URL(next, request.url));
+      }
+      
       // Pour les non-coachs, vérifier l'état d'onboarding
       const { data: profile } = await supabase
         .from('profiles')

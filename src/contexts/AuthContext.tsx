@@ -11,7 +11,6 @@ type AuthContextType = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
-  signInWithMagicLink: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (profileData: any) => Promise<{ error: any }>;
 };
@@ -169,16 +168,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signInWithMagicLink = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     router.push('/auth/login');
@@ -238,7 +227,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     signIn,
     signUp,
-    signInWithMagicLink,
     signOut,
     updateProfile,
   };
