@@ -1,0 +1,873 @@
+{
+  "project": "RD Coaching",
+  "description": "Minimalist web app for fitness coaching service with coach/client access roles",
+  "techStack": ["Next.js", "Vite", "Supabase", "TailwindCSS", "Vercel/Netlify"],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Next.js Project with Supabase & TailwindCSS",
+      "description": "Initialize the Next.js project with TailwindCSS integration and Supabase connection for the RD Coaching web application.",
+      "details": "Complete project initialization with all required dependencies and configurations.",
+      "testStrategy": "1. Verify that the project builds without errors: npm run build \n2. Run the development server: npm run dev",
+      "priority": "high",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Install Node.js and setup development environment",
+          "description": "Ensure Node.js is installed and environment is ready",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "1.2",
+          "title": "Create Next.js project with TypeScript and TailwindCSS",
+          "description": "Run: npx create-next-app@latest rdcoaching --typescript --tailwind --eslint",
+          "estimatedTime": "10 minutes"
+        },
+        {
+          "id": "1.3",
+          "title": "Install Supabase client library",
+          "description": "Run: npm install @supabase/supabase-js",
+          "estimatedTime": "5 minutes"
+        },
+        {
+          "id": "1.4",
+          "title": "Create environment variables file",
+          "description": "Create .env.local with Supabase URL and anon key placeholders",
+          "estimatedTime": "5 minutes"
+        },
+        {
+          "id": "1.5",
+          "title": "Verify project setup",
+          "description": "Test build and dev server to ensure everything works",
+          "estimatedTime": "10 minutes"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Setup Supabase Database Schema",
+      "description": "Create and configure the database tables (profiles, daily_logs) with proper relationships and RLS policies.",
+      "details": "Complete database setup with all tables, relationships, and security policies.",
+      "testStrategy": "1. Test table creation and relationships\n2. Verify RLS policies work correctly\n3. Test data insertion and retrieval",
+      "priority": "high",
+      "dependencies": [1],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Create user_role enum type",
+          "description": "Create enum with values: coach, client",
+          "estimatedTime": "5 minutes"
+        },
+        {
+          "id": "2.2",
+          "title": "Create profiles table structure",
+          "description": "Create table with all required fields (id, email, first_name, last_name, birth_date, height, address, phone, starting_weight, sports_practiced, objectives, injuries, role, is_onboarded, created_at, updated_at)",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "2.3",
+          "title": "Create daily_logs table structure",
+          "description": "Create table with fields (id, client_id, weight, energy_level, sleep_quality, appetite, notes, log_date, created_at, training_type, plaisir_seance)",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "2.4",
+          "title": "Setup foreign key relationships",
+          "description": "Link daily_logs.client_id to profiles.id with proper constraints",
+          "estimatedTime": "10 minutes"
+        },
+        {
+          "id": "2.5",
+          "title": "Create updated_at triggers",
+          "description": "Setup automatic timestamp updates for both tables",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "2.6",
+          "title": "Configure Row Level Security policies",
+          "description": "Setup RLS for profiles and daily_logs tables with proper access controls",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "2.7",
+          "title": "Test database schema",
+          "description": "Insert test data and verify all constraints and policies work",
+          "estimatedTime": "20 minutes"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Implement Supabase Authentication System",
+      "description": "Setup Supabase auth with email/password and magic link, create auth utilities and middleware.",
+      "details": "Complete authentication system with all auth methods and utilities.",
+      "testStrategy": "1. Test email/password login\n2. Test magic link authentication\n3. Verify protected route access\n4. Test role-based redirections",
+      "priority": "high",
+      "dependencies": [2],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Create Supabase client configuration",
+          "description": "Create lib/supabase.ts with client setup and environment variables",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "3.2",
+          "title": "Create authentication helper functions",
+          "description": "Create lib/auth.ts with login, logout, and user management functions",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "3.3",
+          "title": "Implement email/password authentication",
+          "description": "Setup signIn and signUp with email/password",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "3.4",
+          "title": "Implement magic link authentication",
+          "description": "Setup magic link login functionality",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "3.5",
+          "title": "Create auth middleware",
+          "description": "Create middleware for protecting routes and checking authentication",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "3.6",
+          "title": "Setup role-based routing logic",
+          "description": "Create logic to redirect based on user role (coach vs client)",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "3.7",
+          "title": "Create React auth context/provider",
+          "description": "Setup context for managing auth state throughout the app",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "3.8",
+          "title": "Test all authentication flows",
+          "description": "Test login, logout, role detection, and route protection",
+          "estimatedTime": "30 minutes"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Create Project Structure & Layouts",
+      "description": "Setup the project folder structure with pages, components, and layout components.",
+      "details": "Organize project structure and create reusable layout components.",
+      "testStrategy": "1. Verify folder structure is correctly organized\n2. Test layout components render properly\n3. Verify TypeScript interfaces are properly typed",
+      "priority": "medium",
+      "dependencies": [3],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Create folder structure",
+          "description": "Setup folders: pages/coach/, pages/client/, components/shared/, components/coach/, components/client/, layout/, types/",
+          "estimatedTime": "10 minutes"
+        },
+        {
+          "id": "4.2",
+          "title": "Create TypeScript interfaces",
+          "description": "Create types/Profile.ts, types/DailyLog.ts, types/User.ts with proper typing",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "4.3",
+          "title": "Create CoachLayout component",
+          "description": "Create layout/CoachLayout.tsx with sidebar navigation for coach pages",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "4.4",
+          "title": "Create ClientLayout component",
+          "description": "Create layout/ClientLayout.tsx with navigation for client pages",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "4.5",
+          "title": "Create shared UI components",
+          "description": "Create components/shared/ with Button, Input, Form components",
+          "estimatedTime": "45 minutes"
+        },
+        {
+          "id": "4.6",
+          "title": "Test layout components",
+          "description": "Verify layouts render correctly and navigation works",
+          "estimatedTime": "15 minutes"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Implement Coach Login Page",
+      "description": "Create the login page specifically for the coach with authentication integration.",
+      "details": "Complete coach login page with all authentication methods and validation.",
+      "testStrategy": "1. Test form validation\n2. Test successful login flow\n3. Test error handling for invalid credentials\n4. Verify redirect to coach dashboard",
+      "priority": "medium",
+      "dependencies": [4],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Create coach login page structure",
+          "description": "Create pages/coach/login.tsx with basic page setup",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "5.2",
+          "title": "Implement login form UI",
+          "description": "Create form with email/password fields and magic link option",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "5.3",
+          "title": "Add form validation",
+          "description": "Implement client-side validation for email and password fields",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "5.4",
+          "title": "Integrate Supabase authentication",
+          "description": "Connect form to auth functions and handle login logic",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "5.5",
+          "title": "Add error handling and feedback",
+          "description": "Display error messages and loading states",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "5.6",
+          "title": "Style with TailwindCSS",
+          "description": "Apply minimalist styling to the login page",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "5.7",
+          "title": "Test login functionality",
+          "description": "Test all login scenarios and redirect behavior",
+          "estimatedTime": "20 minutes"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Implement Client Login Page",
+      "description": "Create the login page for clients with authentication integration.",
+      "details": "Complete client login page with all authentication methods and validation.",
+      "testStrategy": "1. Test form validation\n2. Test successful login flow\n3. Test error handling for invalid credentials\n4. Verify redirect to client home",
+      "priority": "medium",
+      "dependencies": [4],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "6.1",
+          "title": "Create client login page structure",
+          "description": "Create pages/client/login.tsx with basic page setup",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "6.2",
+          "title": "Implement login form UI",
+          "description": "Create form with email/password fields and magic link option",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "6.3",
+          "title": "Add form validation",
+          "description": "Implement client-side validation for email and password fields",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "6.4",
+          "title": "Integrate Supabase authentication",
+          "description": "Connect form to auth functions and handle login logic",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "6.5",
+          "title": "Add error handling and feedback",
+          "description": "Display error messages and loading states",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "6.6",
+          "title": "Style with TailwindCSS",
+          "description": "Apply minimalist styling to the login page",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "6.7",
+          "title": "Test login functionality",
+          "description": "Test all login scenarios and redirect behavior",
+          "estimatedTime": "20 minutes"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Create Coach Dashboard",
+      "description": "Build the main coach dashboard showing list of all clients with their basic info and last activity.",
+      "details": "Complete dashboard with client management and activity tracking.",
+      "testStrategy": "1. Test client data fetching and display\n2. Verify last activity indicators work correctly\n3. Test navigation to client profiles\n4. Test responsive design",
+      "priority": "high",
+      "dependencies": [5],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "7.1",
+          "title": "Create dashboard page structure",
+          "description": "Create pages/coach/dashboard.tsx with CoachLayout",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "7.2",
+          "title": "Implement client data fetching",
+          "description": "Create functions to fetch all client profiles from Supabase",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "7.3",
+          "title": "Create client list component",
+          "description": "Build component to display client cards with basic info",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "7.4",
+          "title": "Add last activity tracking",
+          "description": "Fetch latest daily_log for each client and show activity indicator",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "7.5",
+          "title": "Implement client profile navigation",
+          "description": "Add links from client cards to individual profiles",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "7.6",
+          "title": "Add loading and error states",
+          "description": "Implement proper loading indicators and error handling",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "7.7",
+          "title": "Style dashboard with TailwindCSS",
+          "description": "Apply responsive, minimalist styling to dashboard",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "7.8",
+          "title": "Test dashboard functionality",
+          "description": "Test data loading, navigation, and responsive behavior",
+          "estimatedTime": "25 minutes"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Create Client Profile Page for Coach",
+      "description": "Build the detailed client profile page that coaches can access to view client information and daily logs.",
+      "details": "Complete client profile view with comprehensive data display.",
+      "testStrategy": "1. Test dynamic routing with client ID\n2. Verify profile data display\n3. Test daily logs fetching and sorting\n4. Test navigation between pages",
+      "priority": "high",
+      "dependencies": [7],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "8.1",
+          "title": "Create dynamic route structure",
+          "description": "Create pages/coach/client/[id].tsx with proper Next.js routing",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "8.2",
+          "title": "Implement client data fetching by ID",
+          "description": "Create functions to fetch specific client profile by ID",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "8.3",
+          "title": "Create client profile display component",
+          "description": "Build component to show all client profile information",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "8.4",
+          "title": "Implement daily logs fetching",
+          "description": "Fetch and sort daily logs for the specific client",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "8.5",
+          "title": "Create daily logs display component",
+          "description": "Build component to show client's daily log history",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "8.6",
+          "title": "Add navigation controls",
+          "description": "Implement back to dashboard navigation and breadcrumbs",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "8.7",
+          "title": "Style profile page",
+          "description": "Apply TailwindCSS styling for clean data presentation",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "8.8",
+          "title": "Test profile page functionality",
+          "description": "Test routing, data display, and navigation",
+          "estimatedTime": "25 minutes"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Create Client Home Page",
+      "description": "Build the client home page showing today's weight and quick access to daily log entry.",
+      "details": "Complete client dashboard with current status and quick actions.",
+      "testStrategy": "1. Test weight data fetching and display\n2. Verify CTA navigation works\n3. Test responsive design\n4. Verify user can only see their own data",
+      "priority": "medium",
+      "dependencies": [6],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "9.1",
+          "title": "Create client home page structure",
+          "description": "Create pages/client/home.tsx with ClientLayout",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "9.2",
+          "title": "Implement today's weight fetching",
+          "description": "Create function to fetch current user's weight for today",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "9.3",
+          "title": "Create weight display component",
+          "description": "Build component to show today's weight or prompt to log",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "9.4",
+          "title": "Add daily log CTA button",
+          "description": "Create prominent button linking to daily log form",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "9.5",
+          "title": "Add coach message placeholder",
+          "description": "Create section for hardcoded coach message",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "9.6",
+          "title": "Implement loading and error states",
+          "description": "Add proper loading indicators and error handling",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "9.7",
+          "title": "Style home page",
+          "description": "Apply TailwindCSS for clean, user-friendly interface",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "9.8",
+          "title": "Test client home functionality",
+          "description": "Test data loading, navigation, and user restrictions",
+          "estimatedTime": "20 minutes"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Create Daily Log Form for Clients",
+      "description": "Build the comprehensive daily log form where clients can submit their daily tracking data.",
+      "details": "Complete daily log form with all tracking fields and validation.",
+      "testStrategy": "1. Test all form fields and validation\n2. Test data submission to Supabase\n3. Verify success/error handling\n4. Test form reset after submission",
+      "priority": "high",
+      "dependencies": [9],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "10.1",
+          "title": "Create daily log form structure",
+          "description": "Create pages/client/daily-log.tsx with form layout",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "10.2",
+          "title": "Implement basic form fields",
+          "description": "Add date, weight, and notes input fields",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "10.3",
+          "title": "Create radio button components",
+          "description": "Build reusable radio button groups for appetite, energy, sleep, enjoyment",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "10.4",
+          "title": "Add training type field",
+          "description": "Implement training type text input with suggestions",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "10.5",
+          "title": "Implement form validation",
+          "description": "Add client-side validation for all required fields",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "10.6",
+          "title": "Connect form to Supabase",
+          "description": "Implement data submission to daily_logs table",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "10.7",
+          "title": "Add success/error feedback",
+          "description": "Implement user feedback for form submission results",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "10.8",
+          "title": "Style form with TailwindCSS",
+          "description": "Apply intuitive, accessible form styling",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "10.9",
+          "title": "Test form functionality",
+          "description": "Test all fields, validation, and submission scenarios",
+          "estimatedTime": "30 minutes"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Implement Role-based Access Control",
+      "description": "Setup middleware and routing logic to ensure proper access control between coach and client areas.",
+      "details": "Complete access control system with role-based routing and security.",
+      "testStrategy": "1. Test coach email routing\n2. Test client routing\n3. Test unauthorized access attempts\n4. Verify route protection works correctly",
+      "priority": "high",
+      "dependencies": [3],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "11.1",
+          "title": "Create authentication middleware",
+          "description": "Build middleware to check user authentication status",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "11.2",
+          "title": "Implement coach email detection",
+          "description": "Add logic to identify remy.denay6@gmail.com as coach",
+          "estimatedTime": "15 minutes"
+        },
+        {
+          "id": "11.3",
+          "title": "Setup role-based routing",
+          "description": "Implement routing logic based on user role",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "11.4",
+          "title": "Protect coach routes",
+          "description": "Add middleware to restrict /coach/* routes to coach only",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "11.5",
+          "title": "Protect client routes",
+          "description": "Add middleware to restrict /client/* routes to authenticated clients",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "11.6",
+          "title": "Create unauthorized access pages",
+          "description": "Build 401/403 error pages for unauthorized access",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "11.7",
+          "title": "Test access control scenarios",
+          "description": "Test all routing and security edge cases",
+          "estimatedTime": "35 minutes"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Add Data Validation & Error Handling",
+      "description": "Implement comprehensive data validation and error handling throughout the application.",
+      "details": "Complete validation and error handling system for robust application behavior.",
+      "testStrategy": "1. Test form validation scenarios\n2. Test network error handling\n3. Test loading states\n4. Verify error messages are user-friendly",
+      "priority": "medium",
+      "dependencies": [10, 11],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "12.1",
+          "title": "Enhance client-side form validation",
+          "description": "Improve validation for all forms with better error messages",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "12.2",
+          "title": "Add server-side validation",
+          "description": "Implement validation for all Supabase operations",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "12.3",
+          "title": "Create React error boundaries",
+          "description": "Implement error boundaries to catch and handle React errors",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "12.4",
+          "title": "Enhance loading states",
+          "description": "Add comprehensive loading indicators for all async operations",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "12.5",
+          "title": "Improve error messaging",
+          "description": "Create user-friendly error messages for all scenarios",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "12.6",
+          "title": "Add network error handling",
+          "description": "Implement handling for connection issues and timeouts",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "12.7",
+          "title": "Test validation and error scenarios",
+          "description": "Comprehensive testing of all validation and error handling",
+          "estimatedTime": "45 minutes"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Optimize Performance & User Experience",
+      "description": "Optimize the application for performance and enhance user experience with loading states and smooth interactions.",
+      "details": "Performance optimization and UX enhancements for production readiness.",
+      "testStrategy": "1. Test loading performance\n2. Verify smooth user interactions\n3. Test on different devices and connection speeds\n4. Measure and optimize Core Web Vitals",
+      "priority": "low",
+      "dependencies": [12],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "13.1",
+          "title": "Add skeleton loaders",
+          "description": "Implement skeleton loading components for better UX",
+          "estimatedTime": "45 minutes"
+        },
+        {
+          "id": "13.2",
+          "title": "Optimize Supabase queries",
+          "description": "Review and optimize database queries and indexing",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "13.3",
+          "title": "Implement client-side caching",
+          "description": "Add appropriate caching for frequently accessed data",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "13.4",
+          "title": "Add smooth transitions",
+          "description": "Implement CSS transitions and animations for better UX",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "13.5",
+          "title": "Optimize images and assets",
+          "description": "Compress and optimize all images and static assets",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "13.6",
+          "title": "Test and optimize Core Web Vitals",
+          "description": "Measure and improve LCP, FID, and CLS metrics",
+          "estimatedTime": "50 minutes"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Testing & Quality Assurance",
+      "description": "Comprehensive testing of all features and user flows to ensure application reliability.",
+      "details": "Complete testing suite covering all functionality and user scenarios.",
+      "testStrategy": "1. Create test scenarios for all user flows\n2. Test on multiple browsers and devices\n3. Perform security testing\n4. Test data integrity and consistency",
+      "priority": "medium",
+      "dependencies": [13],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "14.1",
+          "title": "Test authentication flows",
+          "description": "Comprehensive testing of coach and client login/logout",
+          "estimatedTime": "45 minutes"
+        },
+        {
+          "id": "14.2",
+          "title": "Test CRUD operations",
+          "description": "Test all create, read, update, delete operations",
+          "estimatedTime": "60 minutes"
+        },
+        {
+          "id": "14.3",
+          "title": "Test role-based access control",
+          "description": "Thoroughly test all access control scenarios",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "14.4",
+          "title": "Test form validations",
+          "description": "Test all form validation and error scenarios",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "14.5",
+          "title": "Test responsive design",
+          "description": "Test on different devices and screen sizes",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "14.6",
+          "title": "Test data persistence",
+          "description": "Verify all data is correctly saved and retrieved",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "14.7",
+          "title": "Perform security testing",
+          "description": "Test for common security vulnerabilities",
+          "estimatedTime": "45 minutes"
+        },
+        {
+          "id": "14.8",
+          "title": "User acceptance testing",
+          "description": "End-to-end testing from user perspective",
+          "estimatedTime": "60 minutes"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Deployment Setup",
+      "description": "Configure and deploy the application to Vercel or Netlify with proper environment configuration.",
+      "details": "Complete deployment setup with production configuration and monitoring.",
+      "testStrategy": "1. Test production deployment\n2. Verify environment variables work in production\n3. Test all features in production environment\n4. Verify SSL and security configurations",
+      "priority": "low",
+      "dependencies": [14],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "15.1",
+          "title": "Choose deployment platform",
+          "description": "Evaluate and select between Vercel or Netlify based on project needs",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "15.2",
+          "title": "Setup production Supabase environment",
+          "description": "Create production Supabase project and configure settings",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "15.3",
+          "title": "Configure production environment variables",
+          "description": "Setup all required environment variables for production",
+          "estimatedTime": "25 minutes"
+        },
+        {
+          "id": "15.4",
+          "title": "Configure build and deployment scripts",
+          "description": "Setup build configuration and deployment automation",
+          "estimatedTime": "35 minutes"
+        },
+        {
+          "id": "15.5",
+          "title": "Setup custom domain",
+          "description": "Configure custom domain and DNS settings if needed",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "15.6",
+          "title": "Configure SSL certificates",
+          "description": "Ensure SSL is properly configured and working",
+          "estimatedTime": "20 minutes"
+        },
+        {
+          "id": "15.7",
+          "title": "Setup monitoring and logging",
+          "description": "Configure error tracking and performance monitoring",
+          "estimatedTime": "40 minutes"
+        },
+        {
+          "id": "15.8",
+          "title": "Test production deployment",
+          "description": "Deploy and test all functionality in production environment",
+          "estimatedTime": "45 minutes"
+        },
+        {
+          "id": "15.9",
+          "title": "Create deployment documentation",
+          "description": "Document deployment process and configuration",
+          "estimatedTime": "30 minutes"
+        },
+        {
+          "id": "15.10",
+          "title": "Setup backup and recovery procedures",
+          "description": "Configure database backups and recovery procedures",
+          "estimatedTime": "35 minutes"
+        }
+      ]
+    }
+  ],
+  "taskSummary": {
+    "totalTasks": 15,
+    "totalSubtasks": 107,
+    "estimatedTotalTime": "32+ hours",
+    "criticalPath": [1, 2, 3, 11, 5, 7, 8, 10, 12, 14, 15],
+    "recommendedOrder": [
+      "Start with tasks 1-3 (foundation setup)",
+      "Then complete task 4 (project structure)",
+      "Implement authentication pages (tasks 5-6)",
+      "Build core functionality (tasks 7-10)",
+      "Add security and validation (tasks 11-12)",
+      "Optimize and test (tasks 13-14)",
+      "Deploy (task 15)"
+    ],
+    "priorityBreakdown": {
+      "high": 7,
+      "medium": 5,
+      "low": 3
+    }
+  }
+}

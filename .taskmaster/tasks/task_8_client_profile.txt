@@ -1,0 +1,55 @@
+# Task 8: Create Client Profile Page for Coach
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 7  
+**Status:** Pending  
+
+## Description
+Build the detailed client profile page that coaches can access to view client information and daily logs.
+
+## Details
+Complete client profile view with comprehensive data display.
+
+## Test Strategy
+1. Test dynamic routing with client ID
+2. Verify profile data display
+3. Test daily logs fetching and sorting
+4. Test navigation between pages
+
+## Subtasks
+
+### 8.1 Create dynamic route structure
+- **Description:** Create pages/coach/client/[id].tsx with proper Next.js routing
+- **Estimated Time:** 20 minutes
+
+### 8.2 Implement client data fetching by ID
+- **Description:** Create functions to fetch specific client profile by ID
+- **Estimated Time:** 25 minutes
+
+### 8.3 Create client profile display component
+- **Description:** Build component to show all client profile information
+- **Estimated Time:** 40 minutes
+
+### 8.4 Implement daily logs fetching
+- **Description:** Fetch and sort daily logs for the specific client
+- **Estimated Time:** 30 minutes
+
+### 8.5 Create daily logs display component
+- **Description:** Build component to show client's daily log history
+- **Estimated Time:** 35 minutes
+
+### 8.6 Add navigation controls
+- **Description:** Implement back to dashboard navigation and breadcrumbs
+- **Estimated Time:** 15 minutes
+
+### 8.7 Style profile page
+- **Description:** Apply TailwindCSS styling for clean data presentation
+- **Estimated Time:** 35 minutes
+
+### 8.8 Test profile page functionality
+- **Description:** Test routing, data display, and navigation
+- **Estimated Time:** 25 minutes
+
+## Total Estimated Time
+225 minutes (3 hours 45 minutes)

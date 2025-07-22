@@ -1,0 +1,51 @@
+# Task 11: Implement Role-based Access Control
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 3  
+**Status:** Pending  
+
+## Description
+Setup middleware and routing logic to ensure proper access control between coach and client areas.
+
+## Details
+Complete access control system with role-based routing and security.
+
+## Test Strategy
+1. Test coach email routing
+2. Test client routing
+3. Test unauthorized access attempts
+4. Verify route protection works correctly
+
+## Subtasks
+
+### 11.1 Create authentication middleware
+- **Description:** Build middleware to check user authentication status
+- **Estimated Time:** 30 minutes
+
+### 11.2 Implement coach email detection
+- **Description:** Add logic to identify remy.denay6@gmail.com as coach
+- **Estimated Time:** 15 minutes
+
+### 11.3 Setup role-based routing
+- **Description:** Implement routing logic based on user role
+- **Estimated Time:** 25 minutes
+
+### 11.4 Protect coach routes
+- **Description:** Add middleware to restrict /coach/* routes to coach only
+- **Estimated Time:** 20 minutes
+
+### 11.5 Protect client routes
+- **Description:** Add middleware to restrict /client/* routes to authenticated clients
+- **Estimated Time:** 20 minutes
+
+### 11.6 Create unauthorized access pages
+- **Description:** Build 401/403 error pages for unauthorized access
+- **Estimated Time:** 25 minutes
+
+### 11.7 Test access control scenarios
+- **Description:** Test all routing and security edge cases
+- **Estimated Time:** 35 minutes
+
+## Total Estimated Time
+170 minutes (2 hours 50 minutes)

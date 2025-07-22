@@ -1,0 +1,55 @@
+# Task 9: Create Client Home Page
+
+## Overview
+**Priority:** Medium  
+**Dependencies:** Task 6  
+**Status:** Pending  
+
+## Description
+Build the client home page showing today's weight and quick access to daily log entry.
+
+## Details
+Complete client dashboard with current status and quick actions.
+
+## Test Strategy
+1. Test weight data fetching and display
+2. Verify CTA navigation works
+3. Test responsive design
+4. Verify user can only see their own data
+
+## Subtasks
+
+### 9.1 Create client home page structure
+- **Description:** Create pages/client/home.tsx with ClientLayout
+- **Estimated Time:** 15 minutes
+
+### 9.2 Implement today's weight fetching
+- **Description:** Create function to fetch current user's weight for today
+- **Estimated Time:** 25 minutes
+
+### 9.3 Create weight display component
+- **Description:** Build component to show today's weight or prompt to log
+- **Estimated Time:** 25 minutes
+
+### 9.4 Add daily log CTA button
+- **Description:** Create prominent button linking to daily log form
+- **Estimated Time:** 15 minutes
+
+### 9.5 Add coach message placeholder
+- **Description:** Create section for hardcoded coach message
+- **Estimated Time:** 15 minutes
+
+### 9.6 Implement loading and error states
+- **Description:** Add proper loading indicators and error handling
+- **Estimated Time:** 20 minutes
+
+### 9.7 Style home page
+- **Description:** Apply TailwindCSS for clean, user-friendly interface
+- **Estimated Time:** 30 minutes
+
+### 9.8 Test client home functionality
+- **Description:** Test data loading, navigation, and user restrictions
+- **Estimated Time:** 20 minutes
+
+## Total Estimated Time
+165 minutes (2 hours 45 minutes)

@@ -1,0 +1,172 @@
+{
+  "project": "RD Coaching",
+  "description": "Minimalist web app for fitness coaching service with coach/client access roles",
+  "techStack": ["Next.js", "Vite", "Supabase", "TailwindCSS", "Vercel/Netlify"],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Next.js Project with Supabase & TailwindCSS",
+      "description": "Initialize the Next.js project with TailwindCSS integration and Supabase connection for the RD Coaching web application.",
+      "details": "1. Install Node.js + Vite + Next.js or later\n2. Create a new Next.js project: 'npx create-next-app@latest rdcoaching --typescript --tailwind --eslint'\n3. Install Supabase client: 'npm install @supabase/supabase-js'\n4. Setup environment variables for Supabase connection\n5. Verify that the project builds without errors: 'npm run build'\n6. Run the development server: 'npm run dev'",
+      "testStrategy": "1. Verify that the project builds without errors: npm run build \n2. Run the development server: npm run dev",
+      "priority": "high",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Setup Supabase Database Schema",
+      "description": "Create and configure the database tables (profiles, daily_logs) with proper relationships and RLS policies.",
+      "details": "1. Create 'profiles' table with all required fields (id, email, first_name, last_name, birth_date, height, address, phone, starting_weight, sports_practiced, objectives, injuries, role, is_onboarded, created_at, updated_at)\n2. Create 'daily_logs' table with required fields (id, client_id, weight, energy_level, sleep_quality, appetite, notes, log_date, created_at, training_type, plaisir_seance)\n3. Setup foreign key relationship between daily_logs.client_id and profiles.id\n4. Create user_role enum (coach, client)\n5. Setup Row Level Security (RLS) policies\n6. Create triggers for updated_at timestamps",
+      "testStrategy": "1. Test table creation and relationships\n2. Verify RLS policies work correctly\n3. Test data insertion and retrieval",
+      "priority": "high",
+      "dependencies": [1],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Implement Supabase Authentication System",
+      "description": "Setup Supabase auth with email/password and magic link, create auth utilities and middleware.",
+      "details": "1. Create lib/supabase.ts with Supabase client configuration\n2. Create lib/auth.ts with auth helper functions\n3. Implement email/password authentication\n4. Implement magic link authentication\n5. Create auth middleware for protected routes\n6. Setup role-based routing (coach vs client)\n7. Create auth context/provider for React",
+      "testStrategy": "1. Test email/password login\n2. Test magic link authentication\n3. Verify protected route access\n4. Test role-based redirections",
+      "priority": "high",
+      "dependencies": [2],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Create Project Structure & Layouts",
+      "description": "Setup the project folder structure with pages, components, and layout components.",
+      "details": "1. Create folder structure (pages/coach/, pages/client/, components/shared/, components/coach/, components/client/, layout/, types/)\n2. Create CoachLayout.tsx component\n3. Create ClientLayout.tsx component\n4. Create TypeScript interfaces (Profile.ts, DailyLog.ts, User.ts)\n5. Setup basic navigation components\n6. Create shared components (buttons, forms, etc.)",
+      "testStrategy": "1. Verify folder structure is correctly organized\n2. Test layout components render properly\n3. Verify TypeScript interfaces are properly typed",
+      "priority": "medium",
+      "dependencies": [3],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Implement Coach Login Page",
+      "description": "Create the login page specifically for the coach with authentication integration.",
+      "details": "1. Create pages/coach/login.tsx\n2. Implement login form with email/password fields\n3. Add magic link option\n4. Integrate with Supabase auth\n5. Add validation and error handling\n6. Redirect to coach dashboard after successful login\n7. Style with TailwindCSS for clean, minimalist design",
+      "testStrategy": "1. Test form validation\n2. Test successful login flow\n3. Test error handling for invalid credentials\n4. Verify redirect to coach dashboard",
+      "priority": "medium",
+      "dependencies": [4],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement Client Login Page",
+      "description": "Create the login page for clients with authentication integration.",
+      "details": "1. Create pages/client/login.tsx\n2. Implement login form with email/password fields\n3. Add magic link option\n4. Integrate with Supabase auth\n5. Add validation and error handling\n6. Redirect to client home after successful login\n7. Style with TailwindCSS for clean, minimalist design",
+      "testStrategy": "1. Test form validation\n2. Test successful login flow\n3. Test error handling for invalid credentials\n4. Verify redirect to client home",
+      "priority": "medium",
+      "dependencies": [4],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Create Coach Dashboard",
+      "description": "Build the main coach dashboard showing list of all clients with their basic info and last activity.",
+      "details": "1. Create pages/coach/dashboard.tsx\n2. Fetch all client profiles from Supabase\n3. Display client list with first name, starting/latest weight\n4. Show visual indicator of last activity (based on latest daily_log)\n5. Add links to individual client profiles\n6. Implement modular layout with sidebar navigation\n7. Add loading states and error handling\n8. Style with TailwindCSS following minimalist design",
+      "testStrategy": "1. Test client data fetching and display\n2. Verify last activity indicators work correctly\n3. Test navigation to client profiles\n4. Test responsive design",
+      "priority": "high",
+      "dependencies": [5],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Create Client Profile Page for Coach",
+      "description": "Build the detailed client profile page that coaches can access to view client information and daily logs.",
+      "details": "1. Create pages/coach/client/[id].tsx\n2. Fetch client profile data by ID\n3. Display full profiles data (height, goals, injuries, etc.)\n4. Fetch and display latest daily_logs for the client\n5. Sort logs by log_date descending\n6. Implement view-only mode (no editing yet)\n7. Add navigation back to dashboard\n8. Style with TailwindCSS for clean data presentation",
+      "testStrategy": "1. Test dynamic routing with client ID\n2. Verify profile data display\n3. Test daily logs fetching and sorting\n4. Test navigation between pages",
+      "priority": "high",
+      "dependencies": [7],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Create Client Home Page",
+      "description": "Build the client home page showing today's weight and quick access to daily log entry.",
+      "details": "1. Create pages/client/home.tsx\n2. Fetch and display weight of the day (if logged)\n3. Add CTA button to go to daily-log page\n4. Add placeholder message from coach (hardcoded initially)\n5. Implement basic sidebar navigation\n6. Add loading states and error handling\n7. Style with TailwindCSS for clean, user-friendly interface",
+      "testStrategy": "1. Test weight data fetching and display\n2. Verify CTA navigation works\n3. Test responsive design\n4. Verify user can only see their own data",
+      "priority": "medium",
+      "dependencies": [6],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 10,
+      "title": "Create Daily Log Form for Clients",
+      "description": "Build the comprehensive daily log form where clients can submit their daily tracking data.",
+      "details": "1. Create pages/client/daily-log.tsx\n2. Implement form with all required fields:\n   - Date (log_date) - input date\n   - Weight (weight) - input number\n   - Appetite (appetite) - radio buttons (faible → fort)\n   - Energy (energy_level) - radio buttons (1-5)\n   - Sleep Quality (sleep_quality) - radio buttons (1-5)\n   - Training Type (training_type) - input text\n   - Session Enjoyment (plaisir_seance) - radio buttons (1-5)\n   - Notes (notes) - textarea\n3. Add form validation for required fields\n4. Integrate with Supabase to insert data into daily_logs table\n5. Add success/error messages\n6. Redirect to home page after successful submission\n7. Style with TailwindCSS for intuitive form design",
+      "testStrategy": "1. Test all form fields and validation\n2. Test data submission to Supabase\n3. Verify success/error handling\n4. Test form reset after submission",
+      "priority": "high",
+      "dependencies": [9],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 11,
+      "title": "Implement Role-based Access Control",
+      "description": "Setup middleware and routing logic to ensure proper access control between coach and client areas.",
+      "details": "1. Create middleware to check user authentication status\n2. Implement role-based routing logic\n3. Ensure remy.denay6@gmail.com always redirects to /coach/dashboard\n4. Ensure all other users redirect to /client/home\n5. Protect all /coach/* routes for coach access only\n6. Protect all /client/* routes for authenticated clients only\n7. Add proper error pages for unauthorized access\n8. Test edge cases and security scenarios",
+      "testStrategy": "1. Test coach email routing\n2. Test client routing\n3. Test unauthorized access attempts\n4. Verify route protection works correctly",
+      "priority": "high",
+      "dependencies": [3],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Add Data Validation & Error Handling",
+      "description": "Implement comprehensive data validation and error handling throughout the application.",
+      "details": "1. Add client-side validation for all forms\n2. Add server-side validation for Supabase operations\n3. Implement proper error boundaries in React\n4. Add loading states for all async operations\n5. Create user-friendly error messages\n6. Add network error handling\n7. Implement retry mechanisms where appropriate\n8. Add form validation feedback",
+      "testStrategy": "1. Test form validation scenarios\n2. Test network error handling\n3. Test loading states\n4. Verify error messages are user-friendly",
+      "priority": "medium",
+      "dependencies": [10, 11],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Optimize Performance & User Experience",
+      "description": "Optimize the application for performance and enhance user experience with loading states and smooth interactions.",
+      "details": "1. Implement proper loading states for all data fetching\n2. Add skeleton loaders for better UX\n3. Optimize Supabase queries with proper indexing\n4. Implement client-side caching where appropriate\n5. Add smooth transitions and animations\n6. Optimize images and assets\n7. Test and optimize Core Web Vitals\n8. Add progressive enhancement features",
+      "testStrategy": "1. Test loading performance\n2. Verify smooth user interactions\n3. Test on different devices and connection speeds\n4. Measure and optimize Core Web Vitals",
+      "priority": "low",
+      "dependencies": [12],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Testing & Quality Assurance",
+      "description": "Comprehensive testing of all features and user flows to ensure application reliability.",
+      "details": "1. Test all authentication flows (coach and client)\n2. Test all CRUD operations for profiles and daily logs\n3. Test role-based access control thoroughly\n4. Test form validations and error scenarios\n5. Test responsive design on different devices\n6. Test data persistence and retrieval\n7. Perform user acceptance testing\n8. Test edge cases and error scenarios\n9. Verify security measures are working\n10. Test performance under load",
+      "testStrategy": "1. Create test scenarios for all user flows\n2. Test on multiple browsers and devices\n3. Perform security testing\n4. Test data integrity and consistency",
+      "priority": "medium",
+      "dependencies": [13],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Deployment Setup",
+      "description": "Configure and deploy the application to Vercel or Netlify with proper environment configuration.",
+      "details": "1. Choose deployment platform (Vercel or Netlify)\n2. Configure environment variables for production\n3. Setup Supabase production environment\n4. Configure build and deployment scripts\n5. Setup custom domain if needed\n6. Configure SSL certificates\n7. Setup monitoring and logging\n8. Test production deployment\n9. Create deployment documentation\n10. Setup backup and recovery procedures",
+      "testStrategy": "1. Test production deployment\n2. Verify environment variables work in production\n3. Test all features in production environment\n4. Verify SSL and security configurations",
+      "priority": "low",
+      "dependencies": [14],
+      "status": "pending",
+      "subtasks": []
+    }
+  ]
+}

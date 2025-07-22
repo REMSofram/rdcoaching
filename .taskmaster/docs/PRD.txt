@@ -1,0 +1,198 @@
+# 📝 Product Requirements Document – Coaching App (Coach / Client)
+
+## Projet Name
+
+RD Coaching
+
+## 🧠 Project Overview
+
+This is a minimalist web app for a fitness coaching service.  
+It provides two distinct access roles:
+
+- 👨‍🏫 **Coach (only one)**: Full access to client profiles and progress
+- 🧍 **Clients**: Can log daily progress and view their own dashboard
+
+The app must be clean, fast, and designed for immediate MVP delivery.  
+No need for branding or visual identity at this stage.
+
+---
+
+## 🎯 Goal of the App
+
+- Help the coach centralize client tracking and profiles
+- Allow clients to submit daily logs for weight, sleep, energy, etc.
+- Ensure smooth and minimalistic experience with no distractions
+- Use Supabase as backend (auth + data)
+
+---
+
+## 👥 Target Audience
+
+- The **coach** (you): solo admin of the platform, email: `remy.denay6@gmail.com`
+- Your **clients**: people you coach manually (via onboarding), who access their dashboard and log daily data
+
+---
+
+## 🧱 Tech Stack
+
+- **Frontend**: Nextjs + Vite
+- **Auth**: Supabase (email/password + magic link)
+- **Database**: Supabase PostgreSQL
+- **Deployment**: Vercel or Netlify (later)
+- **Styling**: TailwindCSS (utility-first, clean)
+
+---
+
+## 🔐 Auth & Routing Rules
+
+- Auth via Supabase (email/password + magic link)
+- `remy.denay6@gmail.com` → always redirected to `/coach/dashboard`
+- All other users → redirected to `/client/home`
+- Protected routes required for both `/coach/*` and `/client/*`
+
+---
+
+## 🗂 Project Structure
+
+```
+src/
+├── pages/
+│   ├── coach/
+│   │   ├── login.tsx
+│   │   ├── dashboard.tsx
+│   │   └── client/[id].tsx
+│   ├── client/
+│   │   ├── login.tsx
+│   │   ├── home.tsx
+│   │   └── daily-log.tsx
+├── components/
+│   ├── shared/
+│   ├── coach/
+│   └── client/
+├── layout/
+│   ├── CoachLayout.tsx
+│   └── ClientLayout.tsx
+├── lib/
+│   ├── supabase.ts
+│   └── auth.ts
+├── types/
+│   ├── Profile.ts
+│   ├── DailyLog.ts
+│   └── User.ts
+```
+
+---
+
+## ✅ Core Features & Functionalities
+
+### 👨‍🏫 Coach Dashboard (`/coach/dashboard`)
+
+- [ ] List of all clients
+  - Shows: first name, starting weight or latest weight
+  - Action: link to profile
+- [ ] Visual indicator of last activity (based on latest daily_log)
+- [ ] Modular layout with sidebar navigation
+
+### 👨‍🏫 Client Profile Page (`/coach/client/:id`)
+
+- [ ] Display full `profiles` data (height, goals, injuries, etc.)
+- [ ] Display latest `daily_logs`
+- [ ] No editing yet – view-only mode
+- [ ] Sorted logs by `log_date` descending
+
+---
+
+### 🧍 Client Home (`/client/home`)
+
+- [ ] Show weight of the day (if logged)
+- [ ] CTA to go to daily-log page
+- [ ] Placeholder message from coach (hardcoded or from Supabase later)
+- [ ] Sidebar layout with basic navigation (optional)
+
+---
+
+### 🧍 Client Daily Log (`/client/daily-log`)
+
+- [ ] Form UI with the following fields:
+
+| Label             | Supabase Key     | UI Component          |
+| ----------------- | ---------------- | --------------------- |
+| Date              | `log_date`       | input date            |
+| Poids (kg)        | `weight`         | input number          |
+| Appétit           | `appetite`       | radio (faible → fort) |
+| Énergie           | `energy_level`   | radio (1–5)           |
+| Qualité sommeil   | `sleep_quality`  | radio (1–5)           |
+| Type entraînement | `training_type`  | input text            |
+| Plaisir séance    | `plaisir_seance` | radio (1–5)           |
+| Notes / remarques | `notes`          | textarea              |
+
+- [ ] Submit form → insert into `daily_logs` table
+- [ ] Disable submit if missing required fields
+
+---
+
+## 🗄 Supabase Schema Mapping
+
+### `profiles`
+
+| Field            | Type        |
+| ---------------- | ----------- |
+| id               | uuid        |
+| email            | text        |
+| first_name       | text        |
+| last_name        | text        |
+| birth_date       | date        |
+| height           | numeric     |
+| address          | text        |
+| phone            | text        |
+| starting_weight  | numeric     |
+| sports_practiced | text[]      |
+| objectives       | text        |
+| injuries         | text        |
+| role             | user_role   |
+| is_onboarded     | boolean     |
+| created_at       | timestamptz |
+| updated_at       | timestamptz |
+
+### `daily_logs`
+
+| Field          | Type        |
+| -------------- | ----------- |
+| id             | uuid        |
+| client_id      | uuid        |
+| weight         | numeric     |
+| energy_level   | int         |
+| sleep_quality  | int         |
+| appetite       | text        |
+| notes          | text        |
+| log_date       | date        |
+| created_at     | timestamptz |
+| training_type  | text        |
+| plaisir_seance | int         |
+
+---
+
+## 🔗 Project Metadata
+
+- **Supabase Project ID**: `xsnadtxqoyqfoqbunzen`
+- **Supabase URL**: [https://xsnadtxqoyqfoqbunzen.supabase.co](https://xsnadtxqoyqfoqbunzen.supabase.co)
+
+---
+
+## 🎨 Inspirations visuelles
+
+- Notion (UX épurée, design clair)
+- Monochrome, sobre, typographie professionnelle
+- [Kahunas](https://kahunas.io/) (dashboard visuel, composant carré & hiérarchisé)
+- [MyStrengthBook](https://www.mystrengthbook.com/) (espace coach + tracking clair)
+
+---
+
+## 🚧 Future Enhancements (Post-MVP)
+
+- Add editing capability for coach on client profile
+- Display macro targets + TDEE
+- Weekly summary auto-generated for the coach
+- Basic graphing of weight / sleep / training adherence
+- Notifications/reminders to clients (email or badge)
+- Google authentification

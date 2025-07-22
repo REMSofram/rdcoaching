@@ -1,0 +1,46 @@
+# Task 4: Create Project Structure & Layouts
+
+## Overview
+**Priority:** Medium  
+**Dependencies:** Task 3  
+**Status:** Pending  
+
+## Description
+Setup the project folder structure with pages, components, and layout components.
+
+## Details
+Organize project structure and create reusable layout components.
+
+## Test Strategy
+1. Verify folder structure is correctly organized
+2. Test layout components render properly
+3. Verify TypeScript interfaces are properly typed
+
+## Subtasks
+
+### 4.1 Create folder structure
+- **Description:** Setup folders: pages/coach/, pages/client/, components/shared/, components/coach/, components/client/, layout/, types/
+- **Estimated Time:** 10 minutes
+
+### 4.2 Create TypeScript interfaces
+- **Description:** Create types/Profile.ts, types/DailyLog.ts, types/User.ts with proper typing
+- **Estimated Time:** 20 minutes
+
+### 4.3 Create CoachLayout component
+- **Description:** Create layout/CoachLayout.tsx with sidebar navigation for coach pages
+- **Estimated Time:** 30 minutes
+
+### 4.4 Create ClientLayout component
+- **Description:** Create layout/ClientLayout.tsx with navigation for client pages
+- **Estimated Time:** 30 minutes
+
+### 4.5 Create shared UI components
+- **Description:** Create components/shared/ with Button, Input, Form components
+- **Estimated Time:** 45 minutes
+
+### 4.6 Test layout components
+- **Description:** Verify layouts render correctly and navigation works
+- **Estimated Time:** 15 minutes
+
+## Total Estimated Time
+150 minutes (2 hours 30 minutes)

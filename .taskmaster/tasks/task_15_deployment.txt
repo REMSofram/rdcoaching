@@ -1,0 +1,42 @@
+# Task 15: Deployment Setup
+
+## Overview
+**Priority:** Low  
+**Dependencies:** Task 14  
+**Status:** Pending  
+
+## Description
+Configure and deploy the application to Vercel or Netlify with proper environment configuration.
+
+## Details
+Complete deployment setup with production configuration and monitoring.
+
+## Test Strategy
+1. Test production deployment
+2. Verify environment variables work in production
+3. Test all features in production environment
+4. Verify SSL and security configurations
+
+## Subtasks
+
+### 15.1 Choose deployment platform
+- **Description:** Evaluate and select between Vercel or Netlify based on project needs
+- **Estimated Time:** 20 minutes
+
+### 15.2 Setup production Supabase environment
+- **Description:** Create production Supabase project and configure settings
+- **Estimated Time:** 30 minutes
+
+### 15.3 Configure production environment variables
+- **Description:** Setup all required environment variables for production
+- **Estimated Time:** 25 minutes
+
+### 15.4 Configure build and deployment scripts
+- **Description:** Setup build configuration and deployment automation
+- **Estimated Time:** 35 minutes
+
+### 15.5 Setup custom domain
+- **Description:** Configure custom domain and DNS settings if needed
+- **Estimated Time:** 30 minutes
+
+### 15.6 Configure SSL certificates
