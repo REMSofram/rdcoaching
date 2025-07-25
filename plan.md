@@ -1,6 +1,7 @@
 # Plan de développement - Application de Coaching
 
 ## État actuel
+
 - ✅ Tests de triggers (mise à jour automatique du champ updated_at) et de sécurité RLS validés avec succès sur les tables `profiles` et `daily_logs`.
 - ✅ Fichiers d'authentification créés et fonctionnels
 - ✅ Flows d'authentification (email/password, magic link) implémentés
@@ -9,6 +10,7 @@
 - ✅ Création automatique du profil utilisateur via trigger après création dans auth.users
 
 ## Notes importantes
+
 - Correction appliquée : utilisation de la colonne `is_onboarded` (et non `onboarding_completed`) dans la table `profiles`
 - Toutes les références à `onboarding_completed` ont été remplacées par `is_onboarded`
 - Workflow hybride en place :
@@ -19,6 +21,7 @@
 - Correction appliquée : gestion de session améliorée côté client (AuthContext et configuration Supabase)
 
 ## Tâches techniques
+
 - [x] 1.1 Install Node.js and setup development environment
 - [x] 1.2 Create Next.js project with TypeScript and TailwindCSS
 - [x] 1.3 Install Supabase client library
@@ -37,27 +40,29 @@
 - [ ] Tester et valider le flux complet d'inscription/connexion
 
 ## Tests manuels à effectuer
+
 ### Authentification
-- [ ] 3.8.1 Test d'inscription (client et coach)
+
+- [x] 3.8.1 Test d'inscription (client et coach)
   - [x] Accéder à /auth/signup
   - [x] Remplir le formulaire
   - [x] Vérifier l'email de confirmation
-  - [ ] Vérifier la création du compte
-  - [ ] Créer un compte avec l'email remy.denay6@gmail.com (doit devenir coach)
-- [ ] 3.8.2 Test de connexion
-  - [ ] Se connecter avec email/mot de passe
-  - [ ] Utiliser le lien magique
-  - [ ] Vérifier la persistance de session
-- [ ] 3.8.3 Test des rôles
-  - [ ] Vérifier la redirection vers /coach/dashboard pour le coach (remy.denay6@gmail.com)
-  - [ ] Vérifier la redirection vers /client/dashboard pour les clients
-  - [ ] Tester l'accès aux routes protégées
-- [ ] 3.8.4 Test de déconnexion
-  - [ ] Cliquer sur "Déconnexion" dans le dashboard
-  - [ ] Vérifier que la session est bien supprimée
-  - [ ] Vérifier la redirection vers la page de login
+  - [x] Vérifier la création du compte
+  - [x] Créer un compte avec l'email remy.denay6@gmail.com (doit devenir coach)
+- [x] 3.8.2 Test de connexion
+  - [x] Se connecter avec email/mot de passe
+  - [x] Vérifier la persistance de session
+- [x] 3.8.3 Test des rôles
+  - [x] Vérifier la redirection vers /coach/dashboard pour le coach (remy.denay6@gmail.com)
+  - [x] Vérifier la redirection vers /client/dashboard pour les clients
+  - [x] Tester l'accès aux routes protégées
+- [x] 3.8.4 Test de déconnexion
+  - [x] Cliquer sur "Déconnexion" dans le dashboard
+  - [x] Vérifier que la session est bien supprimée
+  - [x] Vérifier la redirection vers la page de login
 
 ### Fonctionnalités principales
+
 - [ ] 5.2 Tester l'affichage de la landing page
 - [ ] 6.2 Tester l'accès et l'affichage du dashboard coach
 - [ ] 7.2 Tester l'accès et l'affichage du dashboard client
@@ -67,9 +72,11 @@
 - [ ] Valider la correction du bug `AuthSessionMissingError`
 
 ## Problèmes connus
+
 - Boutons de validation (login/signup) non visibles : remplacer la classe `primary` par `bg-blue-600`
 - Message de validation d'email à améliorer pour inviter à vérifier la boîte mail
 - Problèmes occasionnels de session à surveiller
 
 ## Current Goal
+
 Tester le flux d'inscription avec trigger serveur (profil auto-créé) et valider la gestion des sessions

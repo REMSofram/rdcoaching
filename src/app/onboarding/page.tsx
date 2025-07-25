@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/shared';
-import { Input } from '@/components/shared';
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/shared";
+import { Input } from "@/components/shared";
 
 export default function OnboardingPage() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    birthDate: '',
-    height: '',
-    weight: '',
-    goals: '',
-    medicalHistory: '',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    birthDate: "",
+    height: "",
+    weight: "",
+    goals: "",
+    medicalHistory: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,38 +26,42 @@ export default function OnboardingPage() {
   // Vérifier si l'utilisateur est un coach ou déjà onboardé
   React.useEffect(() => {
     if (!user) {
-      router.push('/auth/login');
+      router.push("/auth/login");
       return;
     }
 
     // Si l'utilisateur est un coach ou déjà onboardé, le rediriger
     const checkOnboarding = async () => {
-      const isCoach = user.email === 'remy.denay6@gmail.com';
+      const isCoach = user.email === "remy.denay6@gmail.com";
       if (isCoach) {
-        router.push('/coach/dashboard');
+        router.push("/coach/dashboard");
         return;
       }
 
       // Vérifier si l'utilisateur a déjà complété l'onboarding
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_onboarded')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("is_onboarded")
+        .eq("id", user.id)
         .single();
 
       if (profile?.is_onboarded) {
-        router.push('/client/dashboard');
+        router.push("/client/dashboard");
       }
     };
 
     checkOnboarding();
   }, [user, router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -69,7 +73,7 @@ export default function OnboardingPage() {
     try {
       // Validation des champs obligatoires
       if (!formData.firstName || !formData.lastName) {
-        throw new Error('Le prénom et le nom sont obligatoires');
+        throw new Error("Le prénom et le nom sont obligatoires");
       }
 
       // Préparer les données pour la mise à jour du profil
@@ -83,39 +87,45 @@ export default function OnboardingPage() {
         objectives: formData.goals,
         injuries: formData.medicalHistory,
         is_onboarded: true,
-        role: user?.email === 'remy.denay6@gmail.com' ? 'coach' : 'client'
+        role: user?.email === "remy.denay6@gmail.com" ? "coach" : "client",
       };
 
-      console.log('Tentative de mise à jour du profil avec les données:', profileUpdate);
+      console.log(
+        "Tentative de mise à jour du profil avec les données:",
+        profileUpdate
+      );
 
       const { error } = await updateProfile(profileUpdate);
 
-      console.log('Réponse de updateProfile:', { error });
+      console.log("Réponse de updateProfile:", { error });
 
       if (error) {
-        console.error('Erreur lors de la mise à jour du profil:', error);
+        console.error("Erreur lors de la mise à jour du profil:", error);
         throw new Error(
-          error.message || 'Une erreur est survenue lors de la mise à jour de votre profil. Veuillez réessayer.'
+          error.message ||
+            "Une erreur est survenue lors de la mise à jour de votre profil. Veuillez réessayer."
         );
       }
 
       // Rediriger vers le tableau de bord approprié
-      const redirectPath = user?.email === 'remy.denay6@gmail.com' 
-        ? '/coach/dashboard' 
-        : '/client/dashboard';
-      
-      console.log('Redirection vers:', redirectPath);
+      const redirectPath =
+        user?.email === "remy.denay6@gmail.com"
+          ? "/coach/dashboard"
+          : "/client/dashboard";
+
+      console.log("Redirection vers:", redirectPath);
       router.push(redirectPath);
-      
     } catch (err: any) {
-      console.error('Erreur lors de la soumission du formulaire:', err);
-      
+      console.error("Erreur lors de la soumission du formulaire:", err);
+
       // Afficher un message d'erreur plus détaillé si disponible
-      const errorMessage = err.message || 'Une erreur est survenue lors de la mise à jour de votre profil';
+      const errorMessage =
+        err.message ||
+        "Une erreur est survenue lors de la mise à jour de votre profil";
       setError(errorMessage);
-      
+
       // Faire défiler vers le haut pour afficher le message d'erreur
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsLoading(false);
     }
@@ -138,8 +148,17 @@ export default function OnboardingPage() {
             <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -209,9 +228,12 @@ export default function OnboardingPage() {
                 value={formData.weight}
                 onChange={handleChange}
               />
-              
+
               <div>
-                <label htmlFor="goals" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="goals"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Objectifs principaux
                 </label>
                 <select
@@ -233,15 +255,18 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label htmlFor="medicalHistory" className="block text-sm font-medium text-gray-700">
-                Antécédents médicaux (facultatif)
+              <label
+                htmlFor="medicalHistory"
+                className="block text-sm font-medium text-gray-800"
+              >
+                Antécédents médicaux et/ou blessures (facultatif)
               </label>
               <div className="mt-1">
                 <textarea
                   id="medicalHistory"
                   name="medicalHistory"
                   rows={3}
-                  className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 text-gray-800"
                   placeholder="Blessures, maladies chroniques, allergies, etc."
                   value={formData.medicalHistory}
                   onChange={handleChange}
@@ -256,7 +281,7 @@ export default function OnboardingPage() {
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 isLoading={isLoading}
               >
-                {isLoading ? 'Enregistrement...' : 'Terminer mon profil'}
+                {isLoading ? "Enregistrement..." : "Terminer mon profil"}
               </Button>
             </div>
           </form>

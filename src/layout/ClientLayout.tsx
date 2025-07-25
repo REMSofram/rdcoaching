@@ -1,9 +1,18 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LogOut, Home, Calendar, BarChart2, MessageSquare, User, Target } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LogOut,
+  Home,
+  Calendar,
+  BarChart2,
+  MessageSquare,
+  User,
+  Target,
+} from "lucide-react";
+import { useState } from "react";
 
 interface NavItemProps {
   href: string;
@@ -12,13 +21,48 @@ interface NavItemProps {
   isActive: boolean;
 }
 
+const accentColors = [
+  {
+    name: "Bleu",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    active: "bg-blue-500 text-white",
+  },
+  {
+    name: "Vert",
+    bg: "bg-emerald-100",
+    text: "text-emerald-800",
+    active: "bg-emerald-500 text-white",
+  },
+  {
+    name: "Violet",
+    bg: "bg-violet-100",
+    text: "text-violet-800",
+    active: "bg-violet-500 text-white",
+  },
+  {
+    name: "Orange",
+    bg: "bg-amber-100",
+    text: "text-amber-900",
+    active: "bg-amber-400 text-white",
+  },
+  {
+    name: "Gris",
+    bg: "bg-slate-200",
+    text: "text-slate-900",
+    active: "bg-slate-500 text-white",
+  },
+];
+
+type AccentColor = (typeof accentColors)[number];
+
 const NavItem: React.FC<NavItemProps> = ({ href, icon, label, isActive }) => (
   <Link
     href={href}
     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
       isActive
-        ? 'bg-primary/10 text-primary'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        ? "bg-slate-500 text-white"
+        : "text-slate-900 hover:bg-slate-200 hover:text-slate-900"
     }`}
   >
     <span className="mr-3">{icon}</span>
@@ -26,16 +70,37 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon, label, isActive }) => (
   </Link>
 );
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default function ClientLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
+  // Retirer useState et accentColors
 
   const navItems = [
-    { href: '/client/dashboard', icon: <Home size={20} />, label: 'Accueil' },
-    { href: '/client/goals', icon: <Target size={20} />, label: 'Mes objectifs' },
-    { href: '/client/progress', icon: <BarChart2 size={20} />, label: 'Ma progression' },
-    { href: '/client/calendar', icon: <Calendar size={20} />, label: 'Mon planning' },
-    { href: '/client/messages', icon: <MessageSquare size={20} />, label: 'Messages' },
-    { href: '/client/profile', icon: <User size={20} />, label: 'Mon profil' },
+    { href: "/client/dashboard", icon: <Home size={20} />, label: "Accueil" },
+    {
+      href: "/client/goals",
+      icon: <Target size={20} />,
+      label: "Mes objectifs",
+    },
+    {
+      href: "/client/progress",
+      icon: <BarChart2 size={20} />,
+      label: "Ma progression",
+    },
+    {
+      href: "/client/calendar",
+      icon: <Calendar size={20} />,
+      label: "Mon planning",
+    },
+    {
+      href: "/client/messages",
+      icon: <MessageSquare size={20} />,
+      label: "Messages",
+    },
+    { href: "/client/profile", icon: <User size={20} />, label: "Mon profil" },
   ];
 
   return (
@@ -45,8 +110,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
           <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4 mb-8">
-              <h1 className="text-xl font-bold text-primary">Mon Espace Client</h1>
+              <h1 className="text-lg font-bold bg-slate-200 text-slate-800 rounded px-3 py-1 tracking-wide shadow-inner border border-slate-300">
+                Mon Espace
+              </h1>
             </div>
+            {/* Retirer le sélecteur de couleur */}
             <nav className="flex-1 px-2 space-y-1">
               {navItems.map((item) => (
                 <NavItem
@@ -60,11 +128,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </nav>
           </div>
           <div className="p-4 border-t border-gray-200">
-            <button 
+            <button
               onClick={async () => {
-                const { signOut } = await import('@/lib/auth');
+                const { signOut } = await import("@/lib/auth");
                 await signOut();
-                window.location.href = '/';
+                window.location.href = "/";
               }}
               className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50"
             >

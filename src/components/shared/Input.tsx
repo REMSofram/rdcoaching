@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef } from "react";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -10,11 +10,20 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
-    { className = '', label, error, fullWidth = false, startIcon, endIcon, id, ...props },
+    {
+      className = "",
+      label,
+      error,
+      fullWidth = false,
+      startIcon,
+      endIcon,
+      id,
+      ...props
+    },
     ref
   ) => {
     const inputId = id || Math.random().toString(36).substring(2, 11);
-    const widthStyle = fullWidth ? 'w-full' : '';
+    const widthStyle = fullWidth ? "w-full" : "";
     const hasError = !!error;
 
     return (
@@ -38,12 +47,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             className={`block w-full rounded-md border ${
               hasError
-                ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500'
-            } ${startIcon ? 'pl-10' : 'pl-3'} ${
-              endIcon ? 'pr-10' : 'pr-3'
+                ? "border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500"
+                : "border-gray-300 text-gray-800 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
+            } ${startIcon ? "pl-10" : "pl-3"} ${
+              endIcon ? "pr-10" : "pr-3"
             } py-2 text-base focus:outline-none focus:ring-1`}
-            aria-invalid={hasError ? 'true' : 'false'}
+            aria-invalid={hasError ? "true" : "false"}
             aria-describedby={hasError ? `${inputId}-error` : undefined}
             {...props}
           />
@@ -63,4 +72,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
