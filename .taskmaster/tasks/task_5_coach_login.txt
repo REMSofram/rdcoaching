@@ -1,0 +1,51 @@
+# Task 5: Implement Coach Login Page
+
+## Overview
+**Priority:** Medium  
+**Dependencies:** Task 4  
+**Status:** Pending  
+
+## Description
+Create the login page specifically for the coach with authentication integration.
+
+## Details
+Complete coach login page with all authentication methods and validation.
+
+## Test Strategy
+1. Test form validation
+2. Test successful login flow
+3. Test error handling for invalid credentials
+4. Verify redirect to coach dashboard
+
+## Subtasks
+
+### 5.1 Create coach login page structure
+- **Description:** Create pages/coach/login.tsx with basic page setup
+- **Estimated Time:** 15 minutes
+
+### 5.2 Implement login form UI
+- **Description:** Create form with email/password fields and magic link option
+- **Estimated Time:** 30 minutes
+
+### 5.3 Add form validation
+- **Description:** Implement client-side validation for email and password fields
+- **Estimated Time:** 20 minutes
+
+### 5.4 Integrate Supabase authentication
+- **Description:** Connect form to auth functions and handle login logic
+- **Estimated Time:** 25 minutes
+
+### 5.5 Add error handling and feedback
+- **Description:** Display error messages and loading states
+- **Estimated Time:** 20 minutes
+
+### 5.6 Style with TailwindCSS
+- **Description:** Apply minimalist styling to the login page
+- **Estimated Time:** 25 minutes
+
+### 5.7 Test login functionality
+- **Description:** Test all login scenarios and redirect behavior
+- **Estimated Time:** 20 minutes
+
+## Total Estimated Time
+155 minutes (2 hours 35 minutes)

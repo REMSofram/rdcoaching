@@ -1,0 +1,55 @@
+# Task 3: Implement Supabase Authentication System
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 2  
+**Status:** Pending  
+
+## Description
+Setup Supabase auth with email/password and magic link, create auth utilities and middleware.
+
+## Details
+Complete authentication system with all auth methods and utilities.
+
+## Test Strategy
+1. Test email/password login
+2. Test magic link authentication
+3. Verify protected route access
+4. Test role-based redirections
+
+## Subtasks
+
+### 3.1 Create Supabase client configuration
+- **Description:** Create lib/supabase.ts with client setup and environment variables
+- **Estimated Time:** 15 minutes
+
+### 3.2 Create authentication helper functions
+- **Description:** Create lib/auth.ts with login, logout, and user management functions
+- **Estimated Time:** 30 minutes
+
+### 3.3 Implement email/password authentication
+- **Description:** Setup signIn and signUp with email/password
+- **Estimated Time:** 20 minutes
+
+### 3.4 Implement magic link authentication
+- **Description:** Setup magic link login functionality
+- **Estimated Time:** 20 minutes
+
+### 3.5 Create auth middleware
+- **Description:** Create middleware for protecting routes and checking authentication
+- **Estimated Time:** 25 minutes
+
+### 3.6 Setup role-based routing logic
+- **Description:** Create logic to redirect based on user role (coach vs client)
+- **Estimated Time:** 20 minutes
+
+### 3.7 Create React auth context/provider
+- **Description:** Setup context for managing auth state throughout the app
+- **Estimated Time:** 25 minutes
+
+### 3.8 Test all authentication flows
+- **Description:** Test login, logout, role detection, and route protection
+- **Estimated Time:** 30 minutes
+
+## Total Estimated Time
+185 minutes (3 hours 5 minutes)

@@ -1,0 +1,55 @@
+# Task 7: Create Coach Dashboard
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 5  
+**Status:** Pending  
+
+## Description
+Build the main coach dashboard showing list of all clients with their basic info and last activity.
+
+## Details
+Complete dashboard with client management and activity tracking.
+
+## Test Strategy
+1. Test client data fetching and display
+2. Verify last activity indicators work correctly
+3. Test navigation to client profiles
+4. Test responsive design
+
+## Subtasks
+
+### 7.1 Create dashboard page structure
+- **Description:** Create pages/coach/dashboard.tsx with CoachLayout
+- **Estimated Time:** 15 minutes
+
+### 7.2 Implement client data fetching
+- **Description:** Create functions to fetch all client profiles from Supabase
+- **Estimated Time:** 25 minutes
+
+### 7.3 Create client list component
+- **Description:** Build component to display client cards with basic info
+- **Estimated Time:** 35 minutes
+
+### 7.4 Add last activity tracking
+- **Description:** Fetch latest daily_log for each client and show activity indicator
+- **Estimated Time:** 30 minutes
+
+### 7.5 Implement client profile navigation
+- **Description:** Add links from client cards to individual profiles
+- **Estimated Time:** 15 minutes
+
+### 7.6 Add loading and error states
+- **Description:** Implement proper loading indicators and error handling
+- **Estimated Time:** 20 minutes
+
+### 7.7 Style dashboard with TailwindCSS
+- **Description:** Apply responsive, minimalist styling to dashboard
+- **Estimated Time:** 40 minutes
+
+### 7.8 Test dashboard functionality
+- **Description:** Test data loading, navigation, and responsive behavior
+- **Estimated Time:** 25 minutes
+
+## Total Estimated Time
+205 minutes (3 hours 25 minutes)

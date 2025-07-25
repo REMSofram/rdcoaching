@@ -1,0 +1,50 @@
+# Task 2: Setup Supabase Database Schema
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 1  
+**Status:** Pending  
+
+## Description
+Create and configure the database tables (profiles, daily_logs) with proper relationships and RLS policies.
+
+## Details
+Complete database setup with all tables, relationships, and security policies.
+
+## Test Strategy
+1. Test table creation and relationships
+2. Verify RLS policies work correctly
+3. Test data insertion and retrieval
+
+## Subtasks
+
+### 2.1 Create user_role enum type
+- **Description:** Create enum with values: coach, client
+- **Estimated Time:** 5 minutes
+
+### 2.2 Create profiles table structure
+- **Description:** Create table with all required fields (id, email, first_name, last_name, birth_date, height, address, phone, starting_weight, sports_practiced, objectives, injuries, role, is_onboarded, created_at, updated_at)
+- **Estimated Time:** 15 minutes
+
+### 2.3 Create daily_logs table structure
+- **Description:** Create table with fields (id, client_id, weight, energy_level, sleep_quality, appetite, notes, log_date, created_at, training_type, plaisir_seance)
+- **Estimated Time:** 15 minutes
+
+### 2.4 Setup foreign key relationships
+- **Description:** Link daily_logs.client_id to profiles.id with proper constraints
+- **Estimated Time:** 10 minutes
+
+### 2.5 Create updated_at triggers
+- **Description:** Setup automatic timestamp updates for both tables
+- **Estimated Time:** 15 minutes
+
+### 2.6 Configure Row Level Security policies
+- **Description:** Setup RLS for profiles and daily_logs tables with proper access controls
+- **Estimated Time:** 30 minutes
+
+### 2.7 Test database schema
+- **Description:** Insert test data and verify all constraints and policies work
+- **Estimated Time:** 20 minutes
+
+## Total Estimated Time
+110 minutes (1 hour 50 minutes)
