@@ -72,19 +72,61 @@ async function checkRelations() {
 
 async function checkRLSPolicies() {
   try {
-    const { data, error } = await supabase
-      .rpc('get_rls_policies');
-      
-    if (error) {
-      console.error('❌ Erreur lors de la vérification des politiques RLS:', error);
-    } else if (data && data.length > 0) {
-      console.log('✅ Politiques RLS configurées pour les tables:');
-      data.forEach((policy: any) => {
-        console.log(`   - ${policy.schemaname}.${policy.tablename}: ${policy.policyname}`);
-      });
-    } else {
-      console.log('ℹ️ Aucune politique RLS trouvée');
+    console.log('\n🔍 Vérification des politiques RLS...');
+    
+    // Vérifier les politiques RLS pour les tables importantes
+    const tablesToCheck = ['profiles', 'daily_logs', 'coach_clients'];
+    let hasPolicies = false;
+    
+    for (const table of tablesToCheck) {
+      try {
+        // Vérifier si la table a le RLS activé
+        const { data: rlsStatus, error: rlsError } = await supabase
+          .from('pg_tables')
+          .select('*')
+          .eq('schemaname', 'public')
+          .eq('tablename', table)
+          .single();
+          
+        if (rlsError || !rlsStatus) {
+          console.error(`❌ Impossible de vérifier le statut RLS pour la table ${table}:`, rlsError);
+          continue;
+        }
+        
+        // Vérifier les politiques RLS spécifiques
+        const { data: policies, error: policiesError } = await supabase
+          .from('pg_policies')
+          .select('*')
+          .eq('schemaname', 'public')
+          .eq('tablename', table);
+          
+        if (policiesError) {
+          console.error(`❌ Erreur lors de la récupération des politiques pour ${table}:`, policiesError);
+          continue;
+        }
+        
+        if (policies && policies.length > 0) {
+          if (!hasPolicies) {
+            console.log('✅ Politiques RLS configurées:');
+            hasPolicies = true;
+          }
+          console.log(`   - Table: ${table}`);
+          policies.forEach((policy: any) => {
+            console.log(`     • ${policy.policyname}: ${policy.cmd} (${policy.roles.join(', ')})`);
+            console.log(`       Condition: ${policy.qual || 'Aucune condition'}`);
+          });
+        } else {
+          console.log(`ℹ️ Aucune politique RLS trouvée pour la table ${table}`);
+        }
+      } catch (err) {
+        console.error(`Erreur lors de la vérification des politiques pour ${table}:`, err);
+      }
     }
+    
+    if (!hasPolicies) {
+      console.log('ℹ️ Aucune politique RLS trouvée pour les tables vérifiées');
+    }
+    
   } catch (err) {
     console.error('Erreur lors de la vérification des politiques RLS:', err);
   }

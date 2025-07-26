@@ -2,11 +2,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  console.log(`[Middleware] Début du traitement pour: ${request.nextUrl.pathname}`);
+  
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
+  
+  // Ajouter un en-tête de réponse personnalisé pour le débogage
+  response.headers.set('x-middleware-path', request.nextUrl.pathname);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,8 +77,15 @@ export async function middleware(request: NextRequest) {
 
     // Si l'utilisateur est connecté
     if (session) {
+      console.log('[Middleware] Session utilisateur trouvée:', { 
+        email: session.user.email, 
+        emailConfirmed: !!session.user.email_confirmed_at,
+        path: request.nextUrl.pathname
+      });
+      
       // 1. Si l'email n'est pas confirmé, rediriger vers la page de vérification
       if (!session.user.email_confirmed_at) {
+        console.log('[Middleware] Email non confirmé, vérification nécessaire');
         // Autoriser l'accès à la page de vérification et aux assets
         if (
           request.nextUrl.pathname.startsWith('/auth/verify-email') ||
@@ -88,14 +100,18 @@ export async function middleware(request: NextRequest) {
 
       // 2. Vérifier si l'utilisateur est un coach
       const isCoach = session.user.email === 'remy.denay6@gmail.com';
+      console.log(`[Middleware] Rôle de l'utilisateur: ${isCoach ? 'coach' : 'client'}`);
 
-      // 3. Si l'utilisateur est un coach, le rediriger vers le tableau de bord du coach
-      if (isCoach && !request.nextUrl.pathname.startsWith('/coach')) {
-        return NextResponse.redirect(new URL('/coach/dashboard', request.url));
+      // 3. Si l'utilisateur est sur la page d'accueil, le rediriger vers le tableau de bord approprié
+      if (request.nextUrl.pathname === '/') {
+        console.log('[Middleware] Redirection depuis la page d\'accueil');
+        const redirectPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+        return NextResponse.redirect(new URL(redirectPath, request.url));
       }
 
       // 4. Si l'utilisateur n'est pas un coach, vérifier s'il a terminé l'onboarding
       if (!isCoach) {
+        console.log('[Middleware] Vérification de l\'onboarding pour le client');
         // Vérifier si l'utilisateur a terminé l'onboarding
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -108,13 +124,11 @@ export async function middleware(request: NextRequest) {
         const isOnboarded = profile?.is_onboarded || false;
 
         // Si l'utilisateur n'a pas terminé l'onboarding, le rediriger vers la page d'onboarding
-        if (!isOnboarded && !request.nextUrl.pathname.startsWith('/onboarding')) {
+        if (!isOnboarded && !request.nextUrl.pathname.startsWith('/onboarding') && !request.nextUrl.pathname.startsWith('/_next')) {
+          console.log('[Middleware] Redirection vers la page d\'onboarding');
           return NextResponse.redirect(new URL('/onboarding', request.url));
-        }
-
-        // Si l'utilisateur a terminé l'onboarding, le rediriger vers le tableau de bord client
-        if (isOnboarded && request.nextUrl.pathname === '/onboarding') {
-          return NextResponse.redirect(new URL('/client/dashboard', request.url));
+        } else {
+          console.log('[Middleware] Onboarding déjà effectué ou page d\'onboarding actuelle');
         }
       }
     }

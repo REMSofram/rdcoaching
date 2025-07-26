@@ -84,18 +84,19 @@ export default function CoachLayout({
       icon: <BarChart2 size={20} />,
       label: "Tableau de bord",
     },
-    { href: "/coach/clients", icon: <Users size={20} />, label: "Mes clients" },
-    {
-      href: "/coach/calendar",
-      icon: <Calendar size={20} />,
-      label: "Calendrier",
-    },
-    {
-      href: "/coach/messages",
-      icon: <MessageSquare size={20} />,
-      label: "Messages",
-    },
-    { href: "/coach/profile", icon: <User size={20} />, label: "Profil" },
+    { 
+      href: "/coach/clients", 
+      icon: <Users size={20} />, 
+      label: "Mes clients" 
+    }
+  ];
+
+  const bottomNavItems = [
+    { 
+      href: "/coach/profile", 
+      icon: <User size={20} />, 
+      label: "Profil" 
+    }
   ];
 
   return (
@@ -121,17 +122,28 @@ export default function CoachLayout({
                 />
               ))}
             </nav>
+            <div className="mt-auto">
+              {bottomNavItems.map((item) => (
+                <NavItem
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={pathname === item.href}
+                />
+              ))}
+            </div>
           </div>
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-2 border-t border-gray-200">
             <button
               onClick={async () => {
                 const { signOut } = await import("@/lib/auth");
                 await signOut();
                 window.location.href = "/";
               }}
-              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50"
+              className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
             >
-              <LogOut className="mr-3" size={20} />
+              <LogOut className="mr-3 h-5 w-5" />
               Déconnexion
             </button>
           </div>

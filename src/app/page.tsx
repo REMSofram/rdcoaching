@@ -3,30 +3,49 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Home() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
+    // Redirection uniquement si l'utilisateur est sur la racine du site
+    if (!isLoading && window.location.pathname === '/') {
       if (user) {
-        // L'utilisateur est connecté, rediriger vers le tableau de bord approprié
         const isCoach = user.email === 'remy.denay6@gmail.com';
         const dashboardPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
         router.push(dashboardPath);
       } else {
-        // L'utilisateur n'est pas connecté, rediriger vers la page de connexion
         router.push('/auth/login');
       }
     }
   }, [user, isLoading, router]);
 
-  // Afficher un indicateur de chargement pendant la vérification de l'état d'authentification
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Cette page ne devrait normalement pas être visible car la redirection se fait dans le middleware
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Page non trouvée</h1>
+        <p className="mb-6">La page que vous cherchez n'existe pas ou vous n'avez pas les droits nécessaires pour y accéder.</p>
+        <div className="space-x-4">
+          <Link href="/auth/login">
+            <Button variant="outline">Se connecter</Button>
+          </Link>
+          <Link href="/">
+            <Button>Retour à l'accueil</Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

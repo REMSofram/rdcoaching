@@ -102,6 +102,18 @@ Profils détaillés des utilisateurs.
 - **Condition :** `(auth.uid() = id)`
 - **Vérification :** `(auth.uid() = id)`
 
+#### 4. Allow coaches to view all profiles
+- **Commande :** `SELECT`
+- **Rôle :** `{public}`
+- **Condition :** `(auth.jwt() ->> 'email'::text) = 'remy.denay6@gmail.com'::text`
+- **Vérification :** `NULL`
+
+#### 5. Allow coaches to update client profiles
+- **Commande :** `UPDATE`
+- **Rôle :** `{public}`
+- **Condition :** `EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND email = 'remy.denay6@gmail.com')`
+- **Vérification :** `NOT (auth.uid() = id)`
+
 ---
 
 ## ⚡ Triggers

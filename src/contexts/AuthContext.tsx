@@ -26,20 +26,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Vérifier d'abord si nous sommes dans un environnement navigateur
     if (typeof window === 'undefined') {
+      console.log('[AuthContext] Exécution côté serveur, arrêt du chargement');
       setIsLoading(false);
       return;
     }
 
+    console.log('[AuthContext] Initialisation du contexte d\'authentification');
+
     // Fonction pour obtenir la session actuelle
     const getSession = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('[AuthContext] Récupération de la session...');
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('[AuthContext] Erreur lors de la récupération de la session:', error);
+        }
         
         if (currentSession?.user) {
+          console.log('[AuthContext] Session utilisateur trouvée:', { 
+            email: currentSession.user.email,
+            emailConfirmed: !!currentSession.user.email_confirmed_at
+          });
           setUser(currentSession.user);
           const isCoach = currentSession.user.email === 'remy.denay6@gmail.com';
+          console.log(`[AuthContext] Définition du rôle: ${isCoach ? 'coach' : 'client'}`);
           setRole(isCoach ? 'coach' : 'client');
         } else {
+          console.log('[AuthContext] Aucune session utilisateur trouvée');
           setUser(null);
           setRole(null);
         }
@@ -56,31 +70,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getSession();
 
     // Écouter les changements d'état d'authentification
+    console.log('[AuthContext] Configuration de l\'écouteur d\'événements d\'authentification');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`[AuthContext] Événement d'authentification: ${event}`, { 
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email
+      });
+      
       setIsLoading(true);
       try {
         if (session?.user) {
+          console.log('[AuthContext] Mise à jour de l\'utilisateur et du rôle');
           setUser(session.user);
           const isCoach = session.user.email === 'remy.denay6@gmail.com';
           const userRole = isCoach ? 'coach' : 'client';
+          console.log(`[AuthContext] Définition du rôle: ${userRole}`);
           setRole(userRole);
           
-          // Rediriger après la connexion
+          // Rediriger après la connexion initiale uniquement
           if (event === 'SIGNED_IN') {
-            // Vérifier si l'email est confirmé
-            if (session.user.email_confirmed_at) {
-              const redirectPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
-              router.push(redirectPath);
+            console.log('[AuthContext] Connexion détectée, vérification de l\'email');
+            // Ne rediriger que si on n'est pas déjà sur une page protégée
+            const currentPath = window.location.pathname;
+            const isOnProtectedRoute = currentPath.startsWith('/coach/') || 
+                                     currentPath.startsWith('/client/') || 
+                                     currentPath === '/onboarding';
+            
+            if (!isOnProtectedRoute) {
+              // Vérifier si l'email est confirmé
+              if (session.user.email_confirmed_at) {
+                const redirectPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+                console.log(`[AuthContext] Redirection vers: ${redirectPath}`);
+                router.push(redirectPath);
+              } else {
+                console.log('[AuthContext] Email non confirmé, redirection vers la vérification');
+                router.push('/auth/verify-email');
+              }
             } else {
-              router.push('/auth/verify-email');
+              console.log(`[AuthContext] Déjà sur une page protégée: ${currentPath}, pas de redirection`);
             }
           }
         } else {
           setUser(null);
           setRole(null);
+          const currentPath = window.location.pathname;
+          console.log(`[AuthContext] Déconnexion détectée, chemin actuel: ${currentPath}`);
           // Rediriger vers la page de connexion si l'utilisateur est déconnecté
-          if (!['/auth/login', '/auth/signup', '/auth/verify-email', '/'].includes(window.location.pathname)) {
+          if (!['/auth/login', '/auth/signup', '/auth/verify-email', '/'].includes(currentPath)) {
+            console.log(`[AuthContext] Redirection vers la page de connexion depuis: ${currentPath}`);
             router.push('/auth/login');
+          } else {
+            console.log('[AuthContext] Pas de redirection nécessaire, déjà sur une page publique');
           }
         }
       } catch (error) {
