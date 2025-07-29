@@ -55,7 +55,7 @@ interface ApiError {
   stack?: string;
 }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle } from 'lucide-react';
+import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -572,7 +572,7 @@ export default function ClientProfilePage() {
 
       {/* Onglets */}
       <Tabs defaultValue="suivi" className="w-full">
-        <TabsList className="grid w-full md:w-1/2 grid-cols-3 bg-gray-100">
+        <TabsList className="grid w-full md:w-3/4 grid-cols-4 bg-gray-100">
           <TabsTrigger 
             value="suivi" 
             className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
@@ -584,7 +584,7 @@ export default function ClientProfilePage() {
             value="programme" 
             className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            <Calendar className="h-4 w-4" />
+            <Dumbbell className="h-4 w-4" />
             <span>Programme</span>
           </TabsTrigger>
           <TabsTrigger 
@@ -593,6 +593,13 @@ export default function ClientProfilePage() {
           >
             <Utensils className="h-4 w-4" />
             <span>Nutrition</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendrier" 
+            className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            <Calendar className="h-4 w-4" />
+            <span>Calendrier</span>
           </TabsTrigger>
         </TabsList>
 
@@ -678,6 +685,22 @@ export default function ClientProfilePage() {
             <p className="text-sm text-gray-600">
               Cette fonctionnalité sera bientôt disponible. Vous pourrez bientôt suivre et gérer la nutrition de vos clients.
             </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="calendrier" className="mt-6">
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div className="px-4 py-5 sm:px-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Calendrier</h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">Visualisez et gérez le calendrier des séances</p>
+            </div>
+            <div className="border-t border-gray-200 px-4 py-12 sm:px-6">
+              <div className="text-center">
+                <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Bientôt disponible</h3>
+                <p className="mt-1 text-sm text-gray-500">Cette fonctionnalité sera bientôt accessible.</p>
+              </div>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

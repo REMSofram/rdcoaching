@@ -8,9 +8,10 @@ import {
   Home,
   Calendar,
   BarChart2,
-  MessageSquare,
+  Utensils,
   User,
-  Target,
+  Dumbbell,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -81,26 +82,33 @@ export default function ClientLayout({
   const navItems = [
     { href: "/client/dashboard", icon: <Home size={20} />, label: "Accueil" },
     {
-      href: "/client/goals",
-      icon: <Target size={20} />,
-      label: "Mes objectifs",
+      href: "/client/suivi",
+      icon: <Activity size={20} />,
+      label: "Suivi",
     },
     {
-      href: "/client/progress",
-      icon: <BarChart2 size={20} />,
-      label: "Ma progression",
+      href: "/client/programme",
+      icon: <Dumbbell size={20} />,
+      label: "Programme",
     },
     {
-      href: "/client/calendar",
+      href: "/client/nutrition",
+      icon: <Utensils size={20} />,
+      label: "Nutrition",
+    },
+    {
+      href: "/client/calendrier",
       icon: <Calendar size={20} />,
-      label: "Mon planning",
+      label: "Calendrier",
     },
-    {
-      href: "/client/messages",
-      icon: <MessageSquare size={20} />,
-      label: "Messages",
-    },
-    { href: "/client/profile", icon: <User size={20} />, label: "Mon profil" },
+  ];
+
+  const bottomNavItems = [
+    { 
+      href: "/client/profile", 
+      icon: <User size={20} />, 
+      label: "Profil" 
+    }
   ];
 
   return (
@@ -114,7 +122,6 @@ export default function ClientLayout({
                 Mon Espace
               </h1>
             </div>
-            {/* Retirer le sélecteur de couleur */}
             <nav className="flex-1 px-2 space-y-1">
               {navItems.map((item) => (
                 <NavItem
@@ -122,10 +129,21 @@ export default function ClientLayout({
                   href={item.href}
                   icon={item.icon}
                   label={item.label}
-                  isActive={pathname?.startsWith(item.href) || false}
+                  isActive={pathname === item.href}
                 />
               ))}
             </nav>
+            <div className="mt-auto">
+              {bottomNavItems.map((item) => (
+                <NavItem
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={pathname === item.href}
+                />
+              ))}
+            </div>
           </div>
           <div className="p-4 border-t border-gray-200">
             <button
