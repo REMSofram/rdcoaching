@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import ClientLayout from '@/layout/ClientLayout';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Tableau de bord - Client',
@@ -8,8 +10,16 @@ export const metadata: Metadata = {
 
 export default function ClientDashboard() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900">Mon Tableau de Bord</h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Mon Tableau de Bord</h1>
+        <Link href="/client/daily-log">
+          <Button>
+            Remplir mon journal du jour
+          </Button>
+        </Link>
+      </div>
+      
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">

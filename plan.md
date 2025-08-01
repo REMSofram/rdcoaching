@@ -8,6 +8,7 @@
 - ✅ Gestion des rôles : seul remy.denay6@gmail.com est coach, les autres sont clients
 - ✅ Parcours d'onboarding implémenté avec redirection après vérification d'email
 - ✅ Création automatique du profil utilisateur via trigger après création dans auth.users
+- ✅ Implémentation du formulaire de Daily Log avec accès depuis le tableau de bord et la page de suivi
 
 ## Notes importantes
 
@@ -37,7 +38,12 @@
 - [x] 9.1 Créer la page d'accueil client (pages/client/home)
 - [x] Implémenter la logique d'onboarding
 - [x] Corriger la gestion des sessions pour éviter les erreurs `AuthSessionMissingError`
-- [ ] Tester et valider le flux complet d'inscription/connexion
+- [x] Tester et valider le flux complet d'inscription/connexion
+- [x] Implémenter le service dailyLogService.ts pour gérer les opérations CRUD
+- [x] Créer le composant DailyLogForm avec tous les champs nécessaires
+- [x] Ajouter des boutons d'accès au formulaire sur le tableau de bord et la page de suivi
+- [x] Créer la page dédiée au formulaire de daily log (/client/daily-log)
+- [ ] Tester le parcours complet du formulaire de daily log
 
 ## Tests manuels à effectuer
 
@@ -48,6 +54,16 @@
   - [x] Remplir le formulaire
   - [x] Vérifier l'email de confirmation
   - [x] Vérifier la création du compte
+
+### Daily Log
+
+- [ ] Tester l'accès au formulaire
+  - [ ] Vérifier que le bouton est présent sur le tableau de bord client
+  - [ ] Vérifier que le bouton est présent sur la page de suivi
+  - [ ] Vérifier que le formulaire se charge correctement
+  - [ ] Tester la soumission du formulaire
+  - [ ] Vérifier que les données sont correctement enregistrées dans Supabase
+  - [ ] Tester l'édition d'un log existant
   - [x] Créer un compte avec l'email remy.denay6@gmail.com (doit devenir coach)
 - [x] 3.8.2 Test de connexion
   - [x] Se connecter avec email/mot de passe
