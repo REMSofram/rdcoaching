@@ -1,22 +1,27 @@
 'use client';
 
-'use client';
-
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { DailyLog, createDailyLog, getTodaysLog, updateDailyLog } from '@/services/dailyLogService';
+import { useNotification } from '@/contexts/NotificationContext';
+import { DailyLog, createDailyLog, getLogByDate, updateDailyLog } from '@/services/dailyLogService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/shared/Input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { RatingButtons } from '@/components/ui/RatingButtons';
 
 export default function DailyLogForm() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const { showNotification } = useNotification();
   const today = format(new Date(), 'yyyy-MM-dd');
+  
+  const [showTrainingFields, setShowTrainingFields] = useState(false);
   
   const [formData, setFormData] = useState<Omit<DailyLog, 'id' | 'client_id' | 'created_at' | 'updated_at'>>({
     log_date: today,
@@ -32,43 +37,124 @@ export default function DailyLogForm() {
   });
   const [existingLogId, setExistingLogId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchTodaysLog = async () => {
-      if (!user?.id) return;
+  // Fonction pour charger le log d'une date spécifique
+  const loadLogForDate = async (date: string) => {
+    if (!user?.id) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const { data: log, error } = await getLogByDate(user.id, date);
       
-      try {
-        const { data: todaysLog } = await getTodaysLog(user.id);
-        if (todaysLog) {
-          setFormData({
-            log_date: todaysLog.log_date || today,
-            weight: todaysLog.weight,
-            energy_level: todaysLog.energy_level,
-            sleep_quality: todaysLog.sleep_quality,
-            appetite: todaysLog.appetite as 'faible' | 'moyen' | 'élevé' | undefined,
-            training_type: todaysLog.training_type || '',
-            plaisir_seance: todaysLog.plaisir_seance,
-            notes: todaysLog.notes || ''
-          });
-          setExistingLogId(todaysLog.id);
-        }
-      } catch (error) {
-        console.error('Error fetching today\'s log:', error);
-      } finally {
-        setIsLoading(false);
+      if (error) throw error;
+      
+      if (log) {
+        setExistingLogId(log.id || null);
+        setFormData({
+          log_date: log.log_date || date,
+          weight: log.weight,
+          energy_level: log.energy_level,
+          sleep_hours: log.sleep_hours,
+          sleep_quality: log.sleep_quality,
+          appetite: log.appetite as 'faible' | 'moyen' | 'élevé' | undefined,
+          training_done: log.training_done || false,
+          training_type: log.training_type || '',
+          plaisir_seance: log.plaisir_seance,
+          notes: log.notes || ''
+        });
+        setShowTrainingFields(!!log.training_done);
+      } else {
+        setExistingLogId(null);
+        setFormData({
+          log_date: date,
+          weight: undefined,
+          energy_level: undefined,
+          sleep_hours: undefined,
+          sleep_quality: undefined,
+          appetite: undefined,
+          training_done: false,
+          training_type: '',
+          plaisir_seance: undefined,
+          notes: ''
+        });
+        setShowTrainingFields(false);
       }
-    };
-
-    fetchTodaysLog();
+    } catch (error) {
+      console.error('Error loading log:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (user?.id) {
+      loadLogForDate(formData.log_date);
+    }
+  }, [formData.log_date, user?.id]);
+  
+  // Charger le log pour la date actuelle au montage
+  useEffect(() => {
+    loadLogForDate(today);
   }, [user?.id]);
+  
+  // Gérer le changement de date
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    // Mettre à jour la date dans le formulaire
+    setFormData(prev => ({
+      ...prev,
+      log_date: newDate,
+      // Réinitialiser les autres champs qui dépendent de la date
+      weight: undefined,
+      energy_level: undefined,
+      sleep_hours: undefined,
+      sleep_quality: undefined,
+      appetite: undefined,
+      training_type: '',
+      plaisir_seance: undefined,
+      notes: ''
+    }));
+    setShowTrainingFields(false);
+    // Charger le log pour la nouvelle date
+    loadLogForDate(newDate);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     
+    if (name === 'training_done') {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setShowTrainingFields(isChecked);
+      setFormData(prev => ({
+        ...prev,
+        training_done: isChecked,
+        ...(!isChecked && {
+          training_type: '',
+          plaisir_seance: undefined
+        })
+      }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value ? parseFloat(value) : undefined) : 
-             type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-             value
+      [name]: type === 'number' 
+        ? value === '' ? undefined : parseFloat(value)
+        : value
+    }));
+  };
+
+  const handleTrainingToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setShowTrainingFields(isChecked);
+    
+    setFormData(prev => ({
+      ...prev,
+      training_done: isChecked,
+      ...(!isChecked && {
+        training_type: '',
+        plaisir_seance: undefined
+      })
     }));
   };
 
@@ -79,23 +165,30 @@ export default function DailyLogForm() {
     setIsSubmitting(true);
     
     try {
-      const logData = {
+      const dataToSubmit = {
         ...formData,
         client_id: user.id,
+        // S'assurer que training_done est bien un booléen
+        training_done: !!formData.training_done,
+        // Ne pas inclure les champs d'entraînement si pas d'entraînement
+        ...(!formData.training_done && {
+          training_type: undefined,
+          plaisir_seance: undefined
+        })
       };
       
       if (existingLogId) {
-        await updateDailyLog(existingLogId, logData);
+        await updateDailyLog(existingLogId, dataToSubmit);
       } else {
-        await createDailyLog(logData);
+        await createDailyLog(dataToSubmit);
       }
       
-      // Show success message or redirect
-      alert('Votre journal a été enregistré avec succès!');
+      // Afficher la notification et rediriger
+      showNotification('Votre suivi quotidien a bien été enregistré !');
+      router.push('/client/suivi');
+      
     } catch (error) {
       console.error('Error saving daily log:', error);
-      alert('Une erreur est survenue lors de l\'enregistrement de votre journal.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -152,35 +245,14 @@ export default function DailyLogForm() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Qualité du sommeil (1-5)</label>
-            <select
-              name="sleep_quality"
-              value={formData.sleep_quality ?? ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value="">Sélectionnez...</option>
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num} - {num === 1 ? 'Mauvaise' : num === 5 ? 'Excellente' : ''}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Niveau d'énergie (1-5)</label>
-            <select
-              name="energy_level"
-              value={formData.energy_level ?? ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value="">Sélectionnez...</option>
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num} - {num === 1 ? 'Très bas' : num === 5 ? 'Très élevé' : ''}</option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-gray-700">Qualité du sommeil</label>
+              <span className="text-xs text-gray-500">1 (Mauvaise) à 5 (Excellente)</span>
+            </div>
+            <RatingButtons
+              value={formData.sleep_quality ?? null}
+              onChange={(value) => setFormData({...formData, sleep_quality: value})}
+            />
           </div>
           
           <div>
@@ -199,13 +271,24 @@ export default function DailyLogForm() {
             </select>
           </div>
           
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-gray-700">Niveau d'énergie</label>
+              <span className="text-xs text-gray-500">1 (Très bas) à 5 (Très élevé)</span>
+            </div>
+            <RatingButtons
+              value={formData.energy_level ?? null}
+              onChange={(value) => setFormData({...formData, energy_level: value})}
+            />
+          </div>
+          
           <div className="md:col-span-2">
             <div className="flex items-center mb-2">
               <input
                 type="checkbox"
                 id="training_done"
                 name="training_done"
-                checked={formData.training_done ?? false}
+                checked={showTrainingFields}
                 onChange={handleChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -214,7 +297,7 @@ export default function DailyLogForm() {
               </label>
             </div>
             
-            {formData.training_done && (
+            {showTrainingFields && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type d'entraînement</label>
@@ -229,19 +312,14 @@ export default function DailyLogForm() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plaisir de la séance (1-5)</label>
-                  <select
-                    name="plaisir_seance"
-                    value={formData.plaisir_seance ?? ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Sélectionnez...</option>
-                    {[1, 2, 3, 4, 5].map(num => (
-                      <option key={num} value={num}>{num} - {num === 1 ? 'Aucun plaisir' : num === 5 ? 'Beaucoup de plaisir' : ''}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-gray-700">Plaisir de la séance</label>
+                    <span className="text-xs text-gray-500">1 (Aucun plaisir) à 5 (Beaucoup)</span>
+                  </div>
+                  <RatingButtons
+                    value={formData.plaisir_seance ?? null}
+                    onChange={(value) => setFormData({...formData, plaisir_seance: value})}
+                  />
                 </div>
               </div>
             )}
@@ -265,6 +343,8 @@ export default function DailyLogForm() {
           </Button>
         </div>
       </form>
+
+
     </div>
   );
 }

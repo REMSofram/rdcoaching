@@ -29,6 +29,7 @@ Stockage des journaux quotidiens des utilisateurs.
 | `created_at` | timestamptz | Date de création |
 | `log_date` | date | Date du journal |
 | `training_type` | text | Type d'entraînement |
+| `training_done` | boolean | Indique si une séance d'entraînement a été effectuée |
 | `plaisir_seance` | int4 | Évaluation du plaisir de la séance |
 
 #### Table `profiles`

@@ -33,22 +33,38 @@ export const createDailyLog = async (logData: Omit<DailyLog, 'id' | 'created_at'
   }
 };
 
-export const getTodaysLog = async (clientId: string) => {
+export const getLogByDate = async (clientId: string, date: string) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    console.log('Fetching log for client:', clientId, 'on date:', date);
+    
     const { data, error } = await supabase
       .from('daily_logs')
       .select('*')
       .eq('client_id', clientId)
-      .eq('date', today)
-      .single();
+      .eq('log_date', date)
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = No rows found
+    if (error) {
+      console.error('Supabase error:', error);
+      if (error.code === 'PGRST116') { // No rows found
+        console.log('No log found for the selected date');
+        return { data: null, error: null };
+      }
+      throw error;
+    }
+
+    console.log('Retrieved log:', data);
     return { data, error: null };
   } catch (error) {
-    console.error('Error fetching today\'s log:', error);
+    console.error('Error in getLogByDate:', error);
     return { data: null, error };
   }
+};
+
+// Fonction conservée pour compatibilité
+export const getTodaysLog = async (clientId: string) => {
+  const today = new Date().toISOString().split('T')[0];
+  return getLogByDate(clientId, today);
 };
 
 export const updateDailyLog = async (id: string, updates: Partial<DailyLog>) => {
@@ -74,7 +90,7 @@ export const getClientLogs = async (clientId: string) => {
       .from('daily_logs')
       .select('*')
       .eq('client_id', clientId)
-      .order('date', { ascending: false });
+      .order('log_date', { ascending: false });
 
     if (error) throw error;
     return { data, error: null };

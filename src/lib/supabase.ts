@@ -4,8 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Création du client Supabase avec une configuration minimale
-// pour éviter les problèmes de typage
+// Création du client Supabase avec une configuration étendue
 const createClient = () => {
   return createBrowserClient(supabaseUrl, supabaseKey, {
     auth: {
@@ -14,6 +13,13 @@ const createClient = () => {
       detectSessionInUrl: true,
       flowType: 'pkce',
       debug: process.env.NODE_ENV === 'development',
+    },
+    global: {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+      },
     },
   });
 };
