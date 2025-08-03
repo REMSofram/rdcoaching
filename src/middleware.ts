@@ -105,7 +105,7 @@ export async function middleware(request: NextRequest) {
       // 3. Si l'utilisateur est sur la page d'accueil, le rediriger vers le tableau de bord approprié
       if (request.nextUrl.pathname === '/') {
         console.log('[Middleware] Redirection depuis la page d\'accueil');
-        const redirectPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+        const redirectPath = isCoach ? '/coach/dashboard' : '/client/suivi';
         return NextResponse.redirect(new URL(redirectPath, request.url));
       }
 

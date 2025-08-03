@@ -25,7 +25,7 @@ export default async function ProfilePage() {
           
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">
-              {profile?.full_name || 'Votre nom'}
+              {profile?.full_name || 'Remy Denay'}
             </h1>
             <p className="text-gray-600 mt-1">
               {profile?.role || 'Coach'}

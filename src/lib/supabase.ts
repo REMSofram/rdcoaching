@@ -4,23 +4,14 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Création du client Supabase avec une configuration étendue
+// Création du client Supabase avec configuration minimale
 const createClient = () => {
   return createBrowserClient(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      debug: process.env.NODE_ENV === 'development',
-    },
-    global: {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-      },
-    },
+      detectSessionInUrl: false,
+    }
   });
 };
 

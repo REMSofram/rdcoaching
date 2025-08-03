@@ -91,11 +91,29 @@ interface DailyLog {
   log_date: string;
   date: Date;
   status: 'completed' | 'pending' | 'missed';
+  weight?: number;
   [key: string]: any; // Pour les autres propriétés optionnelles
 }
 
-export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => {
+// Interface pour le résultat de fetchClientLogs qui inclut le dernier poids
+interface ClientLogsResult extends Array<DailyLog> {
+  lastWeight?: number;
+}
+
+export const fetchClientLogs = async (clientId: string): Promise<ClientLogsResult> => {
   try {
+    // Récupérer les logs avec poids de l'historique complet
+    const { data: allLogs, error: allLogsError } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('log_date', { ascending: false });
+
+    if (allLogsError) throw allLogsError;
+
+    // Trouver le dernier poids non nul
+    const lastWeightLog = allLogs?.find(log => log.weight && log.weight > 0);
+    
     // Définir la date d'aujourd'hui à minuit
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -109,21 +127,22 @@ export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => 
     }
 
     // Récupérer les logs pour ces 3 jours
-    const { data: logs, error } = await supabase
+    const { data: recentLogs, error } = await supabase
       .from('daily_logs')
       .select('*')
       .eq('client_id', clientId)
-      .in('log_date', lastThreeDays.map(d => formatDate(d)));
+      .in('log_date', lastThreeDays.map(d => formatDate(d)))
+      .order('log_date', { ascending: false });
 
     if (error) throw error;
 
     // Créer un map des logs par date pour un accès rapide
     const logsByDate = new Map(
-      logs.map(log => [log.log_date, log])
+      recentLogs.map(log => [log.log_date, log])
     );
 
     // Générer le statut pour chaque jour
-    return lastThreeDays.map(date => {
+    const result = lastThreeDays.map(date => {
       const dateStr = formatDate(date);
       const log = logsByDate.get(dateStr);
       const todayStr = formatDate(today);
@@ -133,7 +152,8 @@ export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => 
         return {
           ...log,
           date: new Date(log.log_date),
-          status: 'completed' as const
+          status: 'completed' as const,
+          weight: log.weight || (lastWeightLog?.log_date === log.log_date ? lastWeightLog.weight : undefined)
         };
       } else if (isToday) {
         // Pour aujourd'hui, pas de log = en attente
@@ -142,7 +162,8 @@ export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => 
           log_date: dateStr,
           date: new Date(dateStr),
           status: 'pending' as const,
-          client_id: clientId
+          client_id: clientId,
+          ...(lastWeightLog && { weight: lastWeightLog.weight })
         };
       } else {
         // Pour les jours précédents, pas de log = manqué
@@ -151,10 +172,19 @@ export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => 
           log_date: dateStr,
           date: new Date(dateStr),
           status: 'missed' as const,
-          client_id: clientId
+          client_id: clientId,
+          ...(lastWeightLog && { weight: lastWeightLog.weight })
         };
       }
     });
+
+    // Créer un objet résultat avec le dernier poids
+    const resultWithLastWeight = result as ClientLogsResult;
+    if (lastWeightLog) {
+      resultWithLastWeight.lastWeight = lastWeightLog.weight;
+    }
+
+    return resultWithLastWeight;
   } catch (error) {
     console.error('Error fetching client logs:', error);
     return [];

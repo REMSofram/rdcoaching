@@ -9,11 +9,18 @@ import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientS
 import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
 
 // Type pour les données des clients
+// Type pour les logs avec lastWeight
+type ClientLogsWithLastWeight = Array<{
+  date: Date;
+  status: 'completed' | 'pending' | 'missed';
+  weight?: number;
+  [key: string]: any;
+}> & {
+  lastWeight?: number;
+};
+
 type Client = ClientProfile & {
-  logs: Array<{
-    date: Date;
-    status: 'completed' | 'pending' | 'missed';
-  }>;
+  logs: ClientLogsWithLastWeight;
 };
 
 export default function CoachClientsPage() {
@@ -44,6 +51,8 @@ export default function CoachClientsPage() {
             console.log(`Logs récupérés pour ${client.email}:`, logs);
             return {
               ...client,
+              // Si lastWeight est défini, on l'utilise comme poids actuel
+              current_weight: logs.lastWeight ?? client.current_weight,
               logs: logs || []
             };
           })
@@ -141,12 +150,33 @@ export default function CoachClientsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {client.current_weight ? `${client.current_weight} kg` : 'N/A'}
-                        {client.starting_weight && client.current_weight && (
-                          <span className={`ml-2 text-sm ${client.current_weight < client.starting_weight ? 'text-green-600' : client.current_weight > client.starting_weight ? 'text-red-600' : 'text-gray-500'}`}>
-                            {client.current_weight < client.starting_weight ? '↓' : client.current_weight > client.starting_weight ? '↑' : '→'} {client.starting_weight} kg
-                          </span>
-                        )}
+                        {(() => {
+                          // Récupérer le poids à afficher (dernier log ou current_weight)
+                          const displayWeight = (client.logs?.[0]?.weight != null) 
+                            ? client.logs[0].weight 
+                            : client.current_weight;
+                          
+                          // Si aucun poids n'est disponible
+                          if (displayWeight == null) return 'N/A';
+                          
+                          // Formater le poids avec une seule décimale si nécessaire
+                          const formattedWeight = Number(displayWeight).toFixed(1).replace(/\.?0+$/, '');
+                          
+                          return (
+                            <>
+                              {formattedWeight} kg
+                              {client.starting_weight != null && (
+                                <span className={`ml-2 text-sm ${
+                                  Number(displayWeight) < client.starting_weight ? 'text-green-600' : 
+                                  Number(displayWeight) > client.starting_weight ? 'text-red-600' : 'text-gray-500'
+                                }`}>
+                                  {Number(displayWeight) < client.starting_weight ? '↓' : 
+                                   Number(displayWeight) > client.starting_weight ? '↑' : '→'} {client.starting_weight} kg
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -27,7 +27,7 @@ export default function LoginPage() {
       // mais on peut ajouter un délai pour s'assurer que la session est bien mise à jour
       setTimeout(() => {
         const isCoach = email === 'remy.denay6@gmail.com';
-        const defaultPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+        const defaultPath = isCoach ? '/coach/dashboard' : '/client/suivi';
         const redirectTo = searchParams.get('redirectedFrom') || defaultPath;
         router.push(redirectTo);
       }, 100);

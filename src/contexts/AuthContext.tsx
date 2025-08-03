@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!isOnProtectedRoute) {
               // Vérifier si l'email est confirmé
               if (session.user.email_confirmed_at) {
-                const redirectPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+                const redirectPath = isCoach ? '/coach/dashboard' : '/client/suivi';
                 console.log(`[AuthContext] Redirection vers: ${redirectPath}`);
                 router.push(redirectPath);
               } else {

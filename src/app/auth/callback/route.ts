@@ -37,8 +37,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/onboarding', request.url));
       }
 
-      // Sinon, on le redirige vers le tableau de bord client
-      return NextResponse.redirect(new URL('/client/dashboard', request.url));
+      // Sinon, on le redirige vers la page de suivi
+      return NextResponse.redirect(new URL('/client/suivi', request.url));
     }
   }
 

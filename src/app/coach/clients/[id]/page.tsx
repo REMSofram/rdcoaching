@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import CoachLayout from '@/layout/CoachLayout';
 
 // Interface pour le type d'erreur retourné par updateClientProfile
@@ -116,9 +117,38 @@ type ClientProfilePageProps = {
 export default function ClientProfilePage() {
   const params = useParams();
   const [profile, setProfile] = useState<ClientProfile | null>(null);
-  const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [logs, setLogs] = useState<any[]>([]); // Utilisation de any pour éviter les conflits de types temporairement
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editedValue, setEditedValue] = useState('');
   const router = useRouter();
+
+
+  const handleEditClick = (field: string, currentValue: string) => {
+    setEditingField(field);
+    setEditedValue(currentValue || '');
+  };
+
+  const handleSave = async (field: string) => {
+    if (!profile) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: editedValue })
+        .eq('id', profile.id);
+      
+      if (error) throw error;
+      
+      setProfile(prev => prev ? { ...prev, [field]: editedValue } : null);
+      setEditingField(null);
+      toast.success('Modifications enregistrées avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      toast.error('Une erreur est survenue lors de la mise à jour');
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -181,9 +211,9 @@ export default function ClientProfilePage() {
 
   // Composant pour la modal des informations personnelles
   const PersonalInfoModal = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState<Partial<ClientProfile>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [formData, setFormData] = useState<Partial<ClientProfile>>({});
     
     useEffect(() => {
       if (profile) {
@@ -550,25 +580,105 @@ export default function ClientProfilePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Objectifs */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center mb-2">
-            <Activity className="h-4 w-4 mr-2 text-green-600" />
-            <h3 className="text-sm font-medium text-gray-900">Objectifs</h3>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 relative group">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <Activity className="h-4 w-4 mr-2 text-green-600" />
+              <h3 className="text-sm font-medium text-gray-900">Objectifs</h3>
+            </div>
+            {editingField !== 'objectives' && (
+              <button 
+                onClick={() => handleEditClick('objectives', profile?.objectives || '')}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                title="Modifier les objectifs"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            )}
           </div>
-          <p className="text-xs text-gray-600">
-            {profile.objectives || 'Aucun objectif défini'}
-          </p>
+          
+          {editingField === 'objectives' ? (
+            <div className="space-y-2">
+              <textarea
+                value={editedValue}
+                onChange={(e) => setEditedValue(e.target.value)}
+                className="w-full p-2 text-xs border rounded"
+                rows={3}
+                placeholder="Décrivez les objectifs du client..."
+              />
+              <div className="flex justify-end space-x-2">
+                <button 
+                  onClick={() => setEditingField(null)}
+                  className="text-xs px-2 py-1 text-gray-600 hover:text-gray-800"
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={() => handleSave('objectives')}
+                  className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-600 whitespace-pre-line">
+              {profile?.objectives || 'Aucun objectif défini'}
+            </p>
+          )}
         </div>
 
         {/* Blessures et limitations */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center mb-2">
-            <Activity className="h-4 w-4 mr-2 text-red-600" />
-            <h3 className="text-sm font-medium text-gray-900">Blessures / Limitations</h3>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 relative group">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <Activity className="h-4 w-4 mr-2 text-red-600" />
+              <h3 className="text-sm font-medium text-gray-900">Blessures / Limitations</h3>
+            </div>
+            {editingField !== 'injuries' && (
+              <button 
+                onClick={() => handleEditClick('injuries', profile?.injuries || '')}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                title="Modifier les blessures et limitations"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            )}
           </div>
-          <p className="text-xs text-gray-600">
-            {profile.injuries || 'Aucune blessure ou limitation signalée'}
-          </p>
+          
+          {editingField === 'injuries' ? (
+            <div className="space-y-2">
+              <textarea
+                value={editedValue}
+                onChange={(e) => setEditedValue(e.target.value)}
+                className="w-full p-2 text-xs border rounded"
+                rows={3}
+                placeholder="Décrivez les blessures et limitations du client..."
+              />
+              <div className="flex justify-end space-x-2">
+                <button 
+                  onClick={() => setEditingField(null)}
+                  className="text-xs px-2 py-1 text-gray-600 hover:text-gray-800"
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={() => handleSave('injuries')}
+                  className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-600 whitespace-pre-line">
+              {profile?.injuries || 'Aucune blessure ou limitation signalée'}
+            </p>
+          )}
         </div>
       </div>
 

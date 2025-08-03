@@ -15,7 +15,7 @@ export default function Home() {
     if (!isLoading && window.location.pathname === '/') {
       if (user) {
         const isCoach = user.email === 'remy.denay6@gmail.com';
-        const dashboardPath = isCoach ? '/coach/dashboard' : '/client/dashboard';
+        const dashboardPath = isCoach ? '/coach/dashboard' : '/client/suivi';
         router.push(dashboardPath);
       } else {
         router.push('/auth/login');

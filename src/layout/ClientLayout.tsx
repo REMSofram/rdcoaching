@@ -80,7 +80,6 @@ export default function ClientLayout({
   // Retirer useState et accentColors
 
   const navItems = [
-    { href: "/client/dashboard", icon: <Home size={20} />, label: "Accueil" },
     {
       href: "/client/suivi",
       icon: <Activity size={20} />,
