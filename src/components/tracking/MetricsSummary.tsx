@@ -7,11 +7,13 @@ import { Loader2 } from 'lucide-react';
 
 interface MetricsSummaryProps {
   className?: string;
+  clientId?: string; // ID optionnel du client, utilise user.id par défaut
 }
 
-export function MetricsSummary({ className = '' }: MetricsSummaryProps) {
+export function MetricsSummary({ className = '', clientId }: MetricsSummaryProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const targetClientId = clientId || user?.id;
   const [metrics, setMetrics] = useState({
     lastWeight: 0,
     avgEnergy: 0,
@@ -23,11 +25,11 @@ export function MetricsSummary({ className = '' }: MetricsSummaryProps) {
 
   useEffect(() => {
     const calculateMetrics = async () => {
-      if (!user?.id) return;
+      if (!targetClientId) return;
       
       setIsLoading(true);
       try {
-        const { data: logs, error } = await getClientLogs(user.id);
+        const { data: logs, error } = await getClientLogs(targetClientId);
         if (error) throw error;
         if (!logs) return;
 

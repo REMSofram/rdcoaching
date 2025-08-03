@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CoachLayout from '@/layout/CoachLayout';
-import { Users, ArrowRight, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Users, ArrowRight, Loader2 } from 'lucide-react';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
+import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
 
 // Type pour les données des clients
 type Client = ClientProfile & {
@@ -13,19 +14,6 @@ type Client = ClientProfile & {
     date: Date;
     status: 'completed' | 'pending' | 'missed';
   }>;
-};
-
-const LogStatusIndicator = ({ status }: { status: 'completed' | 'pending' | 'missed' }) => {
-  switch (status) {
-    case 'completed':
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
-    case 'pending':
-      return <Clock className="h-5 w-5 text-amber-500" />;
-    case 'missed':
-      return <XCircle className="h-5 w-5 text-red-500" />;
-    default:
-      return null;
-  }
 };
 
 export default function CoachClientsPage() {
@@ -165,15 +153,31 @@ export default function CoachClientsPage() {
                       {client.objectives || 'Non spécifié'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-1">
+                      <div className="flex items-center justify-start space-x-1">
                         {client.logs.length > 0 ? (
-                          client.logs.map((log, index) => (
-                            <div key={index} className="tooltip" data-tip={`${log.date.toLocaleDateString()}: ${log.status}`}>
-                              <LogStatusIndicator status={log.status} />
-                            </div>
-                          ))
+                          // Trier les logs par date décroissante pour afficher du plus récent au plus ancien
+                          [...client.logs]
+                            .sort((a, b) => b.date.getTime() - a.date.getTime())
+                            .map((log, index) => (
+                              <LogStatusIndicator 
+                                key={index} 
+                                status={log.status} 
+                                date={log.date} 
+                              />
+                            ))
                         ) : (
-                          <span className="text-sm text-gray-500">Aucun suivi</span>
+                          // Si pas de logs, afficher les 3 derniers jours
+                          [0, 1, 2].map((daysAgo) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - daysAgo);
+                            return (
+                              <LogStatusIndicator 
+                                key={daysAgo} 
+                                status={daysAgo === 0 ? 'pending' : 'missed'}
+                                date={date} 
+                              />
+                            );
+                          })
                         )}
                       </div>
                     </td>

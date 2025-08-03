@@ -23,16 +23,9 @@ export default function SuiviPage() {
           <MetricsSummary />
         </section>
         
-        <section className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Historique des enregistrements</h2>
-            <div className="text-sm text-gray-500">
-              {new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' })}
-            </div>
-          </div>
-          
-          <LogHistory className="mt-4" />
-        </section>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <LogHistory />
+        </div>
       </div>
     </div>
   );

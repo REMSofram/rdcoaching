@@ -77,22 +77,84 @@ export const fetchClients = async (): Promise<ClientProfile[]> => {
   }
 };
 
-export const fetchClientLogs = async (clientId: string) => {
+// Fonction pour formater la date au format YYYY-MM-DD
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+interface DailyLog {
+  id: string;
+  client_id: string;
+  log_date: string;
+  date: Date;
+  status: 'completed' | 'pending' | 'missed';
+  [key: string]: any; // Pour les autres propriétés optionnelles
+}
+
+export const fetchClientLogs = async (clientId: string): Promise<DailyLog[]> => {
   try {
+    // Définir la date d'aujourd'hui à minuit
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Créer un tableau pour les 3 derniers jours (aujourd'hui, hier, avant-hier)
+    const lastThreeDays = [];
+    for (let i = 0; i < 3; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      lastThreeDays.push(date);
+    }
+
+    // Récupérer les logs pour ces 3 jours
     const { data: logs, error } = await supabase
       .from('daily_logs')
       .select('*')
       .eq('client_id', clientId)
-      .order('log_date', { ascending: false })
-      .limit(3);
+      .in('log_date', lastThreeDays.map(d => formatDate(d)));
 
     if (error) throw error;
-    
-    return logs.map(log => ({
-      ...log,
-      date: new Date(log.log_date),
-      status: log.completed ? 'completed' : log.missed ? 'missed' : 'pending'
-    }));
+
+    // Créer un map des logs par date pour un accès rapide
+    const logsByDate = new Map(
+      logs.map(log => [log.log_date, log])
+    );
+
+    // Générer le statut pour chaque jour
+    return lastThreeDays.map(date => {
+      const dateStr = formatDate(date);
+      const log = logsByDate.get(dateStr);
+      const todayStr = formatDate(today);
+      const isToday = dateStr === todayStr;
+
+      if (log) {
+        return {
+          ...log,
+          date: new Date(log.log_date),
+          status: 'completed' as const
+        };
+      } else if (isToday) {
+        // Pour aujourd'hui, pas de log = en attente
+        return {
+          id: `pending-${dateStr}`,
+          log_date: dateStr,
+          date: new Date(dateStr),
+          status: 'pending' as const,
+          client_id: clientId
+        };
+      } else {
+        // Pour les jours précédents, pas de log = manqué
+        return {
+          id: `missed-${dateStr}`,
+          log_date: dateStr,
+          date: new Date(dateStr),
+          status: 'missed' as const,
+          client_id: clientId
+        };
+      }
+    });
   } catch (error) {
     console.error('Error fetching client logs:', error);
     return [];

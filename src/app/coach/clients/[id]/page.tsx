@@ -55,7 +55,7 @@ interface ApiError {
   stack?: string;
 }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell } from 'lucide-react';
+import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -67,6 +67,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { fetchClients, fetchClientLogs, updateClientProfile, type ClientProfile } from '@/services/clientService';
+import { MetricsSummary } from '@/components/tracking/MetricsSummary';
+import { LogHistory } from '@/components/tracking/LogHistory';
 
 // Types basés sur la structure de la base de données
 type UserProfile = {
@@ -572,12 +574,12 @@ export default function ClientProfilePage() {
 
       {/* Onglets */}
       <Tabs defaultValue="suivi" className="w-full">
-        <TabsList className="grid w-full md:w-3/4 grid-cols-4 bg-gray-100">
+        <TabsList className="grid w-full md:w-3/4 grid-cols-5 bg-gray-100">
           <TabsTrigger 
             value="suivi" 
             className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            <Activity className="h-4 w-4" />
+            <ActivitySquare className="h-4 w-4" />
             <span>Suivi</span>
           </TabsTrigger>
           <TabsTrigger 
@@ -603,73 +605,19 @@ export default function ClientProfilePage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="suivi" className="mt-6">
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Poids (kg)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Énergie
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sommeil
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Appétit
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Entraînement
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Plaisir
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Notes
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {new Date(log.log_date).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.weight !== undefined ? `${log.weight.toFixed(1)} kg` : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.energy_level}/5
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.sleep_quality}/5
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.appetite}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.training_type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {log.plaisir_seance}/5
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                        {log.notes}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Contenu de l'onglet Suivi */}
+        <TabsContent value="suivi" className="space-y-6 mt-6">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Résumé des indicateurs</h3>
+            <MetricsSummary clientId={params.id as string} />
+          </div>
+          
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <LogHistory clientId={params.id as string} />
           </div>
         </TabsContent>
 
+        {/* Contenu de l'onglet Programme */}
         <TabsContent value="programme" className="mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Programme d'entraînement</h3>
@@ -679,6 +627,7 @@ export default function ClientProfilePage() {
           </div>
         </TabsContent>
 
+        {/* Contenu de l'onglet Nutrition */}
         <TabsContent value="nutrition" className="mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Suivi nutritionnel</h3>
@@ -688,6 +637,7 @@ export default function ClientProfilePage() {
           </div>
         </TabsContent>
 
+        {/* Contenu de l'onglet Calendrier */}
         <TabsContent value="calendrier" className="mt-6">
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
