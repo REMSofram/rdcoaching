@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,20 +18,19 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    // Ne rien faire si déjà en cours de chargement
+    if (isLoading) return;
+    
     setIsLoading(true);
 
     try {
       const { error } = await signIn(email, password);
       if (error) throw error;
       
-      // La redirection est gérée par le contexte d'authentification
-      // mais on peut ajouter un délai pour s'assurer que la session est bien mise à jour
-      setTimeout(() => {
-        const isCoach = email === 'remy.denay6@gmail.com';
-        const defaultPath = isCoach ? '/coach/dashboard' : '/client/suivi';
-        const redirectTo = searchParams.get('redirectedFrom') || defaultPath;
-        router.push(redirectTo);
-      }, 100);
+      // Ne pas rediriger ici, la redirection sera gérée par le contexte d'authentification
+      // et le composant ProtectedRoute
+      
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la connexion');
       setIsLoading(false);
@@ -116,13 +116,14 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="w-full"
+              loading={isLoading}
+              loadingText="Connexion en cours..."
             >
-              {isLoading ? 'Connexion en cours...' : 'Se connecter'}
-            </button>
+              Se connecter
+            </Button>
           </div>
         </form>
 

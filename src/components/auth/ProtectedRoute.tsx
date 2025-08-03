@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Loader from '@/components/ui/Loader';
 
@@ -18,25 +18,48 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, role, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (!isLoading) {
-      // If user is not logged in, redirect to login
+    // Ne rien faire tant que le chargement est en cours
+    if (isLoading) return;
+
+    // Vérifier l'autorisation
+    const checkAuth = () => {
+      // Si l'utilisateur n'est pas connecté
       if (!user) {
-        router.push(redirectTo);
+        setIsAuthorized(false);
         return;
       }
 
-      // If user doesn't have required role, redirect to unauthorized or home
+      // Si l'utilisateur n'a pas le bon rôle
       if (role && !allowedRoles.includes(role)) {
         router.push('/unauthorized');
         return;
       }
-    }
-  }, [user, role, isLoading, allowedRoles, router, redirectTo]);
 
-  // Show loading state while checking auth status
-  if (isLoading || !user) {
+      // Si tout est bon
+      setIsAuthorized(true);
+    };
+
+    checkAuth();
+    setIsCheckingAuth(false);
+  }, [user, role, isLoading, allowedRoles, router]);
+
+  // Rediriger si non autorisé (une fois que le chargement est terminé)
+  useEffect(() => {
+    if (isAuthorized === false && !isLoading && !isCheckingAuth) {
+      // Vérifier que nous ne sommes pas déjà sur la page de redirection
+      if (!pathname.startsWith(redirectTo)) {
+        router.push(redirectTo);
+      }
+    }
+  }, [isAuthorized, isLoading, isCheckingAuth, router, redirectTo, pathname]);
+
+  // Afficher le loader pendant la vérification de l'authentification
+  if (isLoading || isCheckingAuth || isAuthorized === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader size="lg" />
@@ -44,11 +67,11 @@ export default function ProtectedRoute({
     );
   }
 
-  // If user has required role, render children
-  if (role && allowedRoles.includes(role)) {
+  // Si l'utilisateur est autorisé, afficher le contenu
+  if (isAuthorized) {
     return <>{children}</>;
   }
 
-  // Default return (should be caught by the useEffect redirects)
+  // Par défaut, ne rien afficher (la redirection sera gérée par le useEffect)
   return null;
 }

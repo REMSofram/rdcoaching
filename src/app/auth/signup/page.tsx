@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -222,14 +223,15 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div>
-            <button
+          <div className="mt-4">
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="w-full"
+              loading={isLoading}
+              loadingText="Création du compte..."
             >
-              {isLoading ? 'Création du compte...' : 'Créer un compte'}
-            </button>
+              Créer un compte
+            </Button>
           </div>
         </form>
 
