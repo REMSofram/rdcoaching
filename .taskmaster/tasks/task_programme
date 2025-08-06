@@ -1,0 +1,148 @@
+# Task Programme: Gestion des programmes d'entraînement
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 4 (Structure & Layouts)  
+**Status:** Pending  
+
+## Description
+Implémenter la fonctionnalité de gestion des programmes d'entraînement permettant au coach de créer et assigner des programmes aux clients, et aux clients de consulter leurs programmes assignés.
+
+## Details
+Créer l'interface de gestion des programmes côté coach et l'affichage côté client, avec persistance en base de données Supabase.
+
+## Test Strategy
+1. Vérifier que le coach peut créer et assigner des programmes
+2. Tester que les clients voient uniquement leurs programmes assignés
+3. Vérifier la persistance des données en base
+4. Tester la cohérence UI avec le design existant
+
+## Subtasks
+
+### 5.1 Créer le schéma base de données
+- **Description:** Ajouter la table `programs` dans Supabase (version simple MVP)
+- **Table à créer:**
+  ```sql
+  -- Table programs
+  id (uuid, primary key)
+  client_id (uuid, foreign key vers profiles) 
+  title (text)
+  content (text) -- contenu libre du programme
+  is_active (boolean, default true)
+  created_at (timestamptz)
+  updated_at (timestamptz)
+  ```
+- **Estimated Time:** 15 minutes
+
+### 5.2 Créer les types TypeScript
+- **Description:** Ajouter `types/Program.ts` avec l'interface simplifiée
+- **Interface à créer:**
+  ```typescript
+  interface Program {
+    id: string;
+    coach_id: string;
+    client_id: string;
+    title: string;
+    content: string; // texte libre
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  }
+  
+  interface CreateProgramInput {
+    client_id: string;
+    title: string;
+    content: string;
+  }
+  ```
+- **Estimated Time:** 10 minutes
+
+### 5.3 Supprimer cette tâche
+- **Description:** Cette tâche est fusionnée avec 5.4 pour plus de simplicité
+- **Estimated Time:** 0 minutes
+
+### 5.4 Créer la page de création/édition de programme
+- **Description:** Page simple `pages/coach/client/[id]/programme.tsx`
+- **Fonctionnalités:**
+  - Affichage du programme actuel (s'il existe)
+  - Formulaire simple : titre + grande textarea pour le contenu
+  - Bouton "Enregistrer" qui crée ou met à jour le programme
+  - Message de confirmation après sauvegarde
+  - Bouton "Supprimer le programme" si un programme existe
+- **UI:** Formulaire simple et épuré, cohérent avec le design existant
+- **Estimated Time:** 45 minutes
+
+### 5.5 Créer la page Programme côté Client
+- **Description:** Créer `pages/client/programme.tsx`
+- **Fonctionnalités:**
+  - Affichage du programme actif du client (titre + contenu)
+  - Formatage basique du texte (retours à la ligne respectés)
+  - Message si aucun programme assigné : "Aucun programme disponible pour le moment"
+  - Design cohérent avec la sidebar client existante
+  - Affichage en lecture seule uniquement
+- **Estimated Time:** 25 minutes
+
+### 5.6 Créer les services API Supabase
+- **Description:** Créer `lib/programService.ts` avec les fonctions CRUD simplifiées
+- **Fonctions à implémenter:**
+  ```typescript
+  - createOrUpdateProgram(clientId: string, title: string, content: string)
+  - getProgramByClient(clientId: string)
+  - deleteProgram(clientId: string)
+  ```
+- **Logique:** Un client = un seul programme actif maximum
+- **Estimated Time:** 30 minutes
+
+### 5.7 Intégrer dans la navigation existante
+- **Description:** Ajouter les liens "Programme" dans les sidebars
+- **Modifications:**
+  - Activer l'onglet "Programme" dans `CoachLayout.tsx` pour la page client
+  - Activer l'onglet "Programme" dans `ClientLayout.tsx`
+  - Vérifier le routing et les liens
+- **Estimated Time:** 15 minutes
+
+### 5.8 Ajouter la gestion des permissions
+- **Description:** Vérifier que seul le coach peut modifier, seul le client peut voir son programme
+- **Sécurité:**
+  - RLS policies dans Supabase
+  - Vérifications côté client pour l'affichage
+  - Protection des routes
+- **Estimated Time:** 30 minutes
+
+### 5.9 Tests et validation
+- **Description:** Tester l'ensemble de la fonctionnalité
+- **Tests à effectuer:**
+  - Création de programme côté coach
+  - Affichage côté client
+  - Gestion des cas d'erreur (pas de programme, erreurs réseau)
+  - Cohérence UI avec le reste de l'application
+  - Responsive design
+- **Estimated Time:** 30 minutes
+
+### 5.10 Améliorations futures (hors scope MVP)
+- **Description:** Fonctionnalités à considérer pour les versions futures
+- **Idées d'améliorations:**
+  - Mise en forme riche (markdown, bold, listes)
+  - Structuration par exercices/séries/répétitions
+  - Templates de programmes prédéfinis
+  - Historique des programmes précédents
+  - Photos/vidéos d'exercices
+- **Note:** Ces améliorations viendront naturellement une fois le MVP validé
+
+## Total Estimated Time
+175 minutes (2 heures 55 minutes)
+
+## Notes techniques
+- Une seule table `programs` avec un champ `content` en texte libre
+- Un client = un seul programme actif (simplifie la logique)
+- Interface ultra simple : titre + grande textarea côté coach
+- Affichage basique côté client avec retours à la ligne respectés
+- Utiliser `white-space: pre-wrap` en CSS pour préserver le formatage
+- Réutiliser les composants shared existants (Button, Input, etc.)
+- Même architecture que daily_logs pour la cohérence
+
+## Dépendances
+- Tables Supabase créées et configurées
+- Types TypeScript définis
+- Services API implémentés avant les composants UI
+- Tests de bout en bout après implémentation complète
