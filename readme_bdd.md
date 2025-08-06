@@ -1,196 +1,174 @@
-# README BDD - Documentation Base de Données
+# Documentation de la Base de Données RD Coaching
 
-## Vue d'ensemble
-Cette documentation présente la structure de la base de données, incluant les schémas, tables, politiques de sécurité (RLS) et triggers.
+## 📋 Table des matières
+- [Structure des Tables](#-structure-des-tables)
+- [Politiques de Sécurité (RLS)](#-politiques-de-sécurité-rls)
+- [Triggers et Fonctions](#-triggers-et-fonctions)
+- [Sécurité et Bonnes Pratiques](#-sécurité-et-bonnes-pratiques)
+- [Requêtes Utiles](#-requêtes-utiles)
 
----
+## 🏗️ Structure des Tables
 
-## 📊 Structure des Schémas et Tables
-
-### Schema `auth`
-- **Table :** `users`
-  - Gestion de l'authentification des utilisateurs
-  - Référence : `auth.users.id`
-
-### Schema `public`
-
-#### Table `daily_logs`
-Stockage des journaux quotidiens des utilisateurs.
+### Table: `profiles`
+Stocke les informations des utilisateurs (clients et coachs).
 
 | Colonne | Type | Description |
 |---------|------|-------------|
-| `id` | uuid | Identifiant unique (PK) |
-| `client_id` | uuid | Référence vers l'utilisateur |
-| `weight` | numeric | Poids enregistré |
-| `energy_level` | int4 | Niveau d'énergie |
-| `sleep_quality` | int4 | Qualité du sommeil |
-| `appetite` | text | État de l'appétit |
-| `notes` | text | Notes personnelles |
-| `created_at` | timestamptz | Date de création |
-| `log_date` | date | Date du journal |
-| `training_type` | text | Type d'entraînement |
-| `training_done` | boolean | Indique si une séance d'entraînement a été effectuée |
-| `plaisir_seance` | int4 | Évaluation du plaisir de la séance |
-
-#### Table `profiles`
-Profils détaillés des utilisateurs.
-
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `id` | uuid | Identifiant unique (PK) → `auth.users.id` |
-| `email` | text | Adresse email |
+| `id` | UUID | Clé primaire, référence l'utilisateur Auth |
+| `email` | text | Email de l'utilisateur |
 | `first_name` | text | Prénom |
-| `last_name` | text | Nom de famille |
+| `last_name` | text | Nom |
 | `birth_date` | date | Date de naissance |
-| `height` | numeric | Taille |
+| `height` | numeric | Taille en centimètres |
 | `phone` | text | Numéro de téléphone |
-| `starting_weight` | numeric | Poids de départ |
-| `sports_practiced` | text | Sports pratiqués |
-| `objectives` | text | Objectifs personnels |
-| `injuries` | text | Blessures/limitations |
-| `role` | user_role | Rôle de l'utilisateur |
-| `is_onboarded` | bool | État d'intégration |
-| `created_at` | timestamptz | Date de création |
-| `updated_at` | timestamptz | Dernière mise à jour |
+| `starting_weight` | numeric | Poids de départ (kg) |
+| `sports_practiced` | ARRAY | Liste des sports pratiqués |
+| `objectives` | text | Objectifs de l'utilisateur |
+| `injuries` | text | Blessures ou problèmes de santé connus |
+| `role` | user_role | 'client' ou 'coach' (enum) |
+| `is_onboarded` | boolean | Si l'utilisateur a complété l'onboarding |
+| `created_at` | timestamp with time zone | Date de création |
+| `updated_at` | timestamp with time zone | Dernière mise à jour |
 
----
+### Table: `daily_logs`
+Journal des entrées quotidiennes des clients.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire |
+| `client_id` | UUID | Référence au client |
+| `weight` | numeric | Poids (kg) |
+| `energy_level` | integer | Niveau d'énergie (échelle 1-10) |
+| `sleep_quality` | integer | Qualité du sommeil (échelle 1-10) |
+| `appetite` | text | Appétit de la journée |
+| `notes` | text | Notes personnelles |
+| `created_at` | timestamp with time zone | Date de création |
+| `log_date` | date | Date du journal (par défaut: date du jour) |
+| `training_type` | text | Type d'entraînement effectué |
+| `plaisir_seance` | integer | Plaisir ressenti pendant la séance (échelle 1-10) |
+| `sleep_hours` | numeric | Nombre d'heures de sommeil |
+| `training_done` | boolean | Si l'entraînement a été effectué (défaut: false) |
 
 ## 🔒 Politiques de Sécurité (RLS)
 
-### Schema `public` - Table `daily_logs`
+### Politiques pour `profiles`
 
-#### 1. Admin full access
-- **Commande :** `ALL`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.email() = 'remy.denay@gmail.com'::text)`
-- **Vérification :** `NULL`
+1. **Lecture du profil**
+   ```sql
+   CREATE POLICY "Les utilisateurs peuvent voir leur propre profil"
+   ON profiles FOR SELECT
+   USING (auth.uid() = id);
+   ```
 
-#### 2. Allow insert own logs
-- **Commande :** `INSERT`
-- **Rôle :** `{authenticated}`
-- **Condition :** `NULL`
-- **Vérification :** `(auth.uid() = client_id)`
+2. **Mise à jour du profil**
+   ```sql
+   CREATE POLICY "Les utilisateurs peuvent mettre à jour leur propre profil"
+   ON profiles FOR UPDATE
+   USING (auth.uid() = id);
+   ```
 
-#### 3. Allow read access to own logs
-- **Commande :** `SELECT`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.uid() = client_id)`
-- **Vérification :** `NULL`
+### Politiques pour `daily_logs`
 
-#### 4. Allow update to own logs
-- **Commande :** `UPDATE`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.uid() = client_id)`
-- **Vérification :** `NULL`
+1. **Lecture des journaux**
+   ```sql
+   CREATE POLICY "Les utilisateurs peuvent voir leurs propres journaux"
+   ON daily_logs FOR SELECT
+   USING (auth.uid() = user_id);
+   ```
 
-### Schema `public` - Table `profiles`
+2. **Création de journaux**
+   ```sql
+   CREATE POLICY "Les utilisateurs peuvent créer des entrées dans leur journal"
+   ON daily_logs FOR INSERT
+   WITH CHECK (auth.uid() = user_id);
+   ```
 
-#### 1. Allow insert for authenticated users
-- **Commande :** `INSERT`
-- **Rôle :** `{authenticated}`
-- **Condition :** `NULL`
-- **Vérification :** `true`
+3. **Mise à jour des journaux**
+   ```sql
+   CREATE POLICY "Les utilisateurs peuvent mettre à jour leurs propres journaux"
+   ON daily_logs FOR UPDATE
+   USING (auth.uid() = user_id);
+   ```
 
-#### 2. Allow read access to own profile
-- **Commande :** `SELECT`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.uid() = id)`
-- **Vérification :** `NULL`
+## ⚙️ Triggers et Fonctions
 
-#### 3. Allow update to own profile
-- **Commande :** `UPDATE`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.uid() = id)`
-- **Vérification :** `(auth.uid() = id)`
+### Mise à jour automatique des timestamps
 
-#### 4. Allow coaches to view all profiles
-- **Commande :** `SELECT`
-- **Rôle :** `{public}`
-- **Condition :** `(auth.jwt() ->> 'email'::text) = 'remy.denay6@gmail.com'::text`
-- **Vérification :** `NULL`
+```sql
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
 
-#### 5. Allow coaches to update client profiles
-- **Commande :** `UPDATE`
-- **Rôle :** `{public}`
-- **Condition :** `EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND email = 'remy.denay6@gmail.com')`
-- **Vérification :** `NOT (auth.uid() = id)`
+CREATE TRIGGER update_profiles_modtime
+BEFORE UPDATE ON profiles
+FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+```
 
----
+### Vérification du rôle utilisateur
 
-## ⚡ Triggers
+```sql
+CREATE OR REPLACE FUNCTION is_coach()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 
+    FROM profiles 
+    WHERE id = auth.uid() AND role = 'coach'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
 
-### Schema `auth` - Table `users`
+## 🔐 Sécurité et Bonnes Pratiques
 
-#### `on_auth_user_created`
-- **Événement :** `INSERT`
-- **Timing :** `AFTER`
-- **Action :** `EXECUTE FUNCTION handle_new_user()`
-- **Description :** Déclenché après la création d'un nouvel utilisateur pour initialiser son profil
+1. **Row Level Security (RLS)**
+   - Activé sur toutes les tables
+   - Politiques restrictives par défaut
 
-### Schema `public` - Table `daily_logs`
+2. **Authentification**
+   - Gérée par Supabase Auth
+   - Vérification des emails requise
+   - Mots de passe forts obligatoires
 
-#### `update_daily_logs_modtime`
-- **Événement :** `UPDATE`
-- **Timing :** `BEFORE`
-- **Action :** `EXECUTE FUNCTION update_modified_column()`
-- **Description :** Met à jour automatiquement la colonne de modification lors des updates
+3. **Validation des Données**
+   - Contraintes au niveau de la base de données
+   - Validation côté serveur
 
-### Schema `public` - Table `profiles`
+## 🔍 Requêtes Utiles
 
-#### `update_profiles_modtime`
-- **Événement :** `UPDATE`
-- **Timing :** `BEFORE`
-- **Action :** `EXECUTE FUNCTION update_modified_column()`
-- **Description :** Met à jour automatiquement la colonne de modification lors des updates
+### Obtenir les journaux d'un utilisateur
+```sql
+SELECT * FROM daily_logs 
+WHERE user_id = auth.uid()
+ORDER BY date DESC;
+```
 
-### Schema `realtime` - Table `subscription`
+### Compter les entrées de journal par mois
+```sql
+SELECT 
+  DATE_TRUNC('month', date) AS month,
+  COUNT(*) AS entries
+FROM daily_logs
+WHERE user_id = auth.uid()
+GROUP BY month
+ORDER BY month;
+```
 
-#### `tr_check_filters` (INSERT)
-- **Événement :** `INSERT`
-- **Timing :** `BEFORE`
-- **Action :** `EXECUTE FUNCTION realtime.subscription_check_filters()`
+### Vérifier les autorisations
+```sql
+-- Vérifier si l'utilisateur est un coach
+SELECT is_coach();
+```
 
-#### `tr_check_filters` (UPDATE)
-- **Événement :** `UPDATE`
-- **Timing :** `BEFORE`
-- **Action :** `EXECUTE FUNCTION realtime.subscription_check_filters()`
+## 📊 Schéma Relationnel
 
-### Schema `storage` - Table `objects`
+```
+profiles (1) → (n) daily_logs
+```
 
-#### `update_objects_updated_at`
-- **Événement :** `UPDATE`
-- **Timing :** `BEFORE`
-- **Action :** `EXECUTE FUNCTION storage.update_updated_at_column()`
-- **Description :** Gère la mise à jour automatique des timestamps pour les objets de stockage
-
----
-
-## 🔑 Points Clés de Sécurité
-
-1. **Row Level Security (RLS) activé** sur toutes les tables principales
-2. **Accès admin complet** pour `remy.denay@gmail.com`
-3. **Isolation des données** : chaque utilisateur ne peut accéder qu'à ses propres données
-4. **Authentification requise** pour les opérations d'insertion
-5. **Gestion automatique des timestamps** via les triggers
-
----
-
-## 📝 Notes Techniques
-
-- **Base de données :** PostgreSQL avec Supabase
-- **Authentification :** Supabase Auth
-- **Types personnalisés :** `user_role` pour la gestion des rôles
-- **Timestamps :** Gestion automatique via triggers
-- **Relations :** Foreign keys vers `auth.users.id`
-
----
-
-## 🚀 Utilisation
-
-Cette structure permet :
-- ✅ Gestion sécurisée des utilisateurs
-- ✅ Journalisation quotidienne personnalisée
-- ✅ Profils utilisateurs complets
-- ✅ Accès contrôlé par utilisateur
-- ✅ Administration centralisée
-- ✅ Mises à jour automatiques des métadonnées
+- Un utilisateur peut avoir plusieurs entrées de journal
+- Chaque entrée de journal appartient à un seul utilisateur
