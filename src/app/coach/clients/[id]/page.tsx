@@ -60,6 +60,8 @@ import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { getActiveProgram } from '@/services/programService';
+import { Program } from '@/types/Program';
 import {
   Dialog,
   DialogContent,
@@ -121,7 +123,10 @@ export default function ClientProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [editedValue, setEditedValue] = useState('');
+  const [editedValue, setEditedValue] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [program, setProgram] = useState<Program | null>(null);
+  const [programLoading, setProgramLoading] = useState(true);
   const router = useRouter();
 
 
@@ -149,6 +154,26 @@ export default function ClientProfilePage() {
       toast.error('Une erreur est survenue lors de la mise à jour');
     }
   };
+
+  // Charger le programme actif du client
+  useEffect(() => {
+    const loadProgram = async () => {
+      if (!params.id) return;
+      
+      try {
+        setProgramLoading(true);
+        const activeProgram = await getActiveProgram(params.id as string);
+        setProgram(activeProgram);
+      } catch (error) {
+        console.error('Erreur lors du chargement du programme:', error);
+        toast.error('Erreur lors du chargement du programme');
+      } finally {
+        setProgramLoading(false);
+      }
+    };
+    
+    loadProgram();
+  }, [params.id]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -730,10 +755,49 @@ export default function ClientProfilePage() {
         {/* Contenu de l'onglet Programme */}
         <TabsContent value="programme" className="mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Programme d'entraînement</h3>
-            <p className="text-sm text-gray-600">
-              Cette fonctionnalité sera bientôt disponible. Vous pourrez bientôt créer et gérer les programmes d'entraînement de vos clients.
-            </p>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900">Programme d'entraînement</h3>
+              <Link 
+                href={`/coach/clients/${params.id}/programme`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                {program ? 'Modifier le programme' : 'Créer un programme'}
+              </Link>
+            </div>
+            
+            {loading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            ) : program ? (
+              <div>
+                <div className="mb-4">
+                  <h4 className="text-md font-medium text-gray-900">{program.title}</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Mis à jour le {new Date(program.updated_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
+                  {program.content}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Dumbbell className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun programme défini</h3>
+                <p className="mt-1 text-sm text-gray-500">Créez un programme personnalisé pour ce client.</p>
+                <div className="mt-6">
+                  <Link
+                    href={`/coach/clients/${params.id}/programme`}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Créer un programme
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 

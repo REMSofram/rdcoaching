@@ -45,6 +45,27 @@
 - [x] Créer la page dédiée au formulaire de daily log (/client/daily-log)
 - [ ] Tester le parcours complet du formulaire de daily log
 
+## Implémentation de la gestion des programmes d'entraînement
+
+### Tâches techniques
+- [ ] 5.1 Créer le schéma base de données pour les programmes
+- [ ] 5.2 Créer les types TypeScript pour les programmes
+- [ ] 5.4 Créer la page de création/édition de programme (coach)
+- [ ] 5.5 Créer la page Programme côté Client
+- [ ] 5.6 Créer les services API Supabase pour les programmes
+- [ ] 5.7 Intégrer dans la navigation existante
+
+### En cours
+- Création de la structure initiale des fichiers
+- Implémentation du schéma de base de données
+- Développement des services API
+
+### Notes techniques
+- Un client = un seul programme actif maximum
+- Interface simple avec titre et contenu en texte libre
+- Formatage basique avec préservation des retours à la ligne
+- Intégration avec l'UI existante
+
 ## Tests manuels à effectuer
 
 ### Authentification
