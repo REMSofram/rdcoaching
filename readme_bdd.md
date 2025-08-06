@@ -49,7 +49,43 @@ Journal des entrées quotidiennes des clients.
 | `sleep_hours` | numeric | Nombre d'heures de sommeil |
 | `training_done` | boolean | Si l'entraînement a été effectué (défaut: false) |
 
+### Table: `programs`
+Programmes d'entraînement personnalisés pour les clients.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire |
+| `client_id` | UUID | Référence au client |
+| `title` | text | Titre du programme |
+| `content` | text | Contenu détaillé du programme |
+| `is_active` | boolean | Si le programme est actif (un seul par client) |
+| `created_at` | timestamp with time zone | Date de création |
+| `updated_at` | timestamp with time zone | Date de dernière mise à jour |
+
 ## 🔒 Politiques de Sécurité (RLS)
+
+### Politiques pour `programs`
+
+1. **Accès en lecture pour les coachs**
+   - Les coachs peuvent voir tous les programmes de tous les clients
+   - Condition : L'utilisateur doit avoir le rôle 'coach'
+
+2. **Accès en lecture pour les clients**
+   - Les clients ne peuvent voir que leur propre programme actif
+   - Condition : `client_id` doit correspondre à l'ID de l'utilisateur et `is_active` doit être `true`
+
+3. **Création pour les coachs**
+   - Seuls les coachs peuvent créer de nouveaux programmes
+   - Le champ `is_active` est automatiquement défini à `true`
+   - Les autres programmes du client sont automatiquement désactivés
+
+4. **Mise à jour pour les coachs**
+   - Seuls les coachs peuvent mettre à jour les programmes
+   - Permet de modifier le titre, le contenu et le statut actif
+
+5. **Suppression pour les coachs**
+   - Seuls les coachs peuvent supprimer des programmes
+   - La suppression est définitive (cascade si nécessaire)
 
 ### Politiques pour `profiles`
 

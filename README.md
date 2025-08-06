@@ -24,11 +24,13 @@
 - 📅 Suivi des entraînements quotidiens
 - 📊 Visualisation de la progression
 - 📝 Journal d'entraînement
+- 🏋️‍♂️ Consultation du programme d'entraînement actif
 - 🔔 Notifications et rappels
 
 ### Pour les Coachs
 - 👥 Gestion des clients
-- 🎯 Création de programmes personnalisés
+- 🎯 Création et édition de programmes personnalisés
+- 🏅 Gestion des programmes actifs/inactifs
 - 📊 Analyse des performances
 - 💬 Communication directe
 - 📈 Suivi des objectifs

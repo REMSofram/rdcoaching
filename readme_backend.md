@@ -49,6 +49,54 @@ Le fichier `middleware.ts` gère toutes les requêtes entrantes et applique une 
    - Affichage des instructions de vérification
    - Redirection automatique après vérification réussie
 
+## 🏋️‍♂️ Gestion des Programmes d'Entraînement
+
+### Services Disponibles (`src/services/programService.ts`)
+
+1. **Récupérer le programme actif d'un client**
+   ```typescript
+   getActiveProgram(clientId: string): Promise<Program | null>
+   ```
+   - Récupère le programme actif d'un client spécifique
+   - Retourne `null` si aucun programme actif n'est trouvé
+
+2. **Créer un nouveau programme**
+   ```typescript
+   createProgram(programData: CreateProgramInput): Promise<Program>
+   ```
+   - Crée un nouveau programme pour un client
+   - Désactive automatiquement les autres programmes du client
+   - Retourne le programme créé
+
+3. **Mettre à jour un programme existant**
+   ```typescript
+   updateProgram(programId: string, updates: UpdateProgramInput): Promise<Program>
+   ```
+   - Met à jour les informations d'un programme existant
+   - Permet de modifier le titre, le contenu et le statut actif
+   - Met à jour automatiquement le champ `updated_at`
+
+4. **Supprimer un programme**
+   ```typescript
+   deleteProgram(programId: string): Promise<void>
+   ```
+   - Supprime définitivement un programme
+   - Utilisation avec précaution (pas de corbeille)
+
+5. **Récupérer tous les programmes (coachs uniquement)**
+   ```typescript
+   getAllPrograms(): Promise<Program[]>
+   ```
+   - Liste tous les programmes de tous les clients
+   - Réservé aux utilisateurs avec le rôle 'coach'
+
+6. **Récupérer les programmes d'un client spécifique**
+   ```typescript
+   getClientPrograms(clientId: string): Promise<Program[]>
+   ```
+   - Liste tous les programmes d'un client spécifique
+   - Utile pour l'historique des programmes
+
 3. **Onboarding** (`/onboarding`)
    - Complétion du profil utilisateur
    - Configuration des préférences initiales
