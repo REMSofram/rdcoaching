@@ -25,6 +25,7 @@ Créer l'interface de gestion des programmes côté coach et l'affichage côté 
   ```sql
   -- Table programs
   id (uuid, primary key)
+  coach_id (uuid, foreign key vers profiles)
   client_id (uuid, foreign key vers profiles) 
   title (text)
   content (text) -- contenu libre du programme
@@ -35,16 +36,25 @@ Créer l'interface de gestion des programmes côté coach et l'affichage côté 
 - **Estimated Time:** 15 minutes
 
 ### 5.2 Créer les types TypeScript
-- **Description:** Ajouter `types/Program.ts` avec l'interface simplifiée
-- **Interface à créer:**
+- **Description:** Ajouter `types/Program.ts` avec les interfaces pour programmes et jours
+- **Interfaces à créer:**
   ```typescript
   interface Program {
     id: string;
-    coach_id: string;
     client_id: string;
     title: string;
-    content: string; // texte libre
     is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    program_days?: ProgramDay[];
+  }
+  
+  interface ProgramDay {
+    id: string;
+    program_id: string;
+    day_title: string;
+    content: string;
+    day_order: number;
     created_at: string;
     updated_at: string;
   }
@@ -52,46 +62,61 @@ Créer l'interface de gestion des programmes côté coach et l'affichage côté 
   interface CreateProgramInput {
     client_id: string;
     title: string;
-    content: string;
+    days: {
+      day_title: string;
+      content: string;
+      day_order: number;
+    }[];
   }
   ```
-- **Estimated Time:** 10 minutes
+- **Estimated Time:** 15 minutes
 
 ### 5.3 Supprimer cette tâche
 - **Description:** Cette tâche est fusionnée avec 5.4 pour plus de simplicité
 - **Estimated Time:** 0 minutes
 
-### 5.4 Créer la page de création/édition de programme
-- **Description:** Page simple `pages/coach/client/[id]/programme.tsx`
+### 5.4 Créer la page de création/édition de programme côté Coach
+- **Description:** Page avec onglets `pages/coach/client/[id]/programme.tsx`
 - **Fonctionnalités:**
-  - Affichage du programme actuel (s'il existe)
-  - Formulaire simple : titre + grande textarea pour le contenu
-  - Bouton "Enregistrer" qui crée ou met à jour le programme
-  - Message de confirmation après sauvegarde
-  - Bouton "Supprimer le programme" si un programme existe
-- **UI:** Formulaire simple et épuré, cohérent avec le design existant
-- **Estimated Time:** 45 minutes
+  - Titre général du programme en haut
+  - Système d'onglets horizontaux (même style que "Suivi", "Programme", "Nutrition")
+  - Chaque onglet = un jour d'entraînement
+  - Bouton "+" pour ajouter un nouveau jour
+  - Dans chaque onglet : titre du jour + grande textarea pour le contenu
+  - Bouton "Enregistrer" global qui sauvegarde tout le programme
+  - Bouton "Supprimer ce jour" sur chaque onglet (sauf s'il n'y en a qu'un)
+  - Possibilité de réorganiser l'ordre des onglets (drag & drop simple ou flèches)
+- **UI:** Réutiliser exactement le même style d'onglets que dans la navigation existante
+- **Estimated Time:** 75 minutes
 
 ### 5.5 Créer la page Programme côté Client
-- **Description:** Créer `pages/client/programme.tsx`
+- **Description:** Créer `pages/client/programme.tsx` avec onglets
 - **Fonctionnalités:**
-  - Affichage du programme actif du client (titre + contenu)
-  - Formatage basique du texte (retours à la ligne respectés)
+  - Titre du programme en haut avec date de mise à jour
+  - Système d'onglets horizontaux (même style que la sidebar client)
+  - Chaque onglet = un jour d'entraînement
+  - Contenu affiché avec formatage préservé (white-space: pre-wrap)
   - Message si aucun programme assigné : "Aucun programme disponible pour le moment"
-  - Design cohérent avec la sidebar client existante
+  - Navigation fluide entre les onglets
   - Affichage en lecture seule uniquement
-- **Estimated Time:** 25 minutes
+- **UI:** Cohérent avec le design client existant
+- **Estimated Time:** 35 minutes
 
 ### 5.6 Créer les services API Supabase
-- **Description:** Créer `lib/programService.ts` avec les fonctions CRUD simplifiées
+- **Description:** Créer `lib/programService.ts` avec les fonctions CRUD pour programmes et jours
 - **Fonctions à implémenter:**
   ```typescript
-  - createOrUpdateProgram(clientId: string, title: string, content: string)
-  - getProgramByClient(clientId: string)
-  - deleteProgram(clientId: string)
+  - createProgram(clientId: string, title: string, days: ProgramDayInput[])
+  - updateProgram(programId: string, title: string, days: ProgramDayInput[])
+  - getProgramWithDays(clientId: string)
+  - deleteProgram(programId: string)
+  - addProgramDay(programId: string, dayTitle: string, content: string, order: number)
+  - updateProgramDay(dayId: string, dayTitle: string, content: string)
+  - deleteProgramDay(dayId: string)
+  - reorderProgramDays(programId: string, newOrder: {id: string, order: number}[])
   ```
-- **Logique:** Un client = un seul programme actif maximum
-- **Estimated Time:** 30 minutes
+- **Logique:** Un client = un seul programme actif avec plusieurs jours
+- **Estimated Time:** 45 minutes
 
 ### 5.7 Intégrer dans la navigation existante
 - **Description:** Ajouter les liens "Programme" dans les sidebars
@@ -119,27 +144,38 @@ Créer l'interface de gestion des programmes côté coach et l'affichage côté 
   - Responsive design
 - **Estimated Time:** 30 minutes
 
+### 5.11 Créer un composant d'onglets réutilisable
+- **Description:** Créer `components/shared/TabSystem.tsx` pour gérer les onglets
+- **Fonctionnalités:**
+  - Composant générique pour afficher des onglets
+  - Props: tabs (array), activeTab, onTabChange, style (coach/client)
+  - Rendu identique aux onglets existants dans l'app
+  - Support pour les actions sur les onglets (supprimer, réorganiser)
+- **Utilisation:** Réutilisé côté coach et client pour la cohérence
+- **Estimated Time:** 30 minutes
 ### 5.10 Améliorations futures (hors scope MVP)
 - **Description:** Fonctionnalités à considérer pour les versions futures
 - **Idées d'améliorations:**
-  - Mise en forme riche (markdown, bold, listes)
-  - Structuration par exercices/séries/répétitions
+  - Mise en forme riche (markdown, bold, listes)  
   - Templates de programmes prédéfinis
+  - Duplication de jours d'entraînement
+  - Glisser-déposer pour réorganiser les jours
   - Historique des programmes précédents
-  - Photos/vidéos d'exercices
+  - Photos/vidéos d'exercices par jour
 - **Note:** Ces améliorations viendront naturellement une fois le MVP validé
 
 ## Total Estimated Time
-175 minutes (2 heures 55 minutes)
+270 minutes (4 heures 30 minutes)
 
 ## Notes techniques
-- Une seule table `programs` avec un champ `content` en texte libre
-- Un client = un seul programme actif (simplifie la logique)
-- Interface ultra simple : titre + grande textarea côté coach
-- Affichage basique côté client avec retours à la ligne respectés
-- Utiliser `white-space: pre-wrap` en CSS pour préserver le formatage
-- Réutiliser les composants shared existants (Button, Input, etc.)
-- Même architecture que daily_logs pour la cohérence
+- Deux tables : `programs` (programme principal) et `program_days` (jours d'entraînement)
+- Un client = un seul programme actif avec plusieurs jours
+- Système d'onglets horizontaux identique à la navigation existante
+- Interface côté coach : création/édition avec gestion des onglets
+- Interface côté client : consultation avec navigation par onglets
+- Réutiliser les styles d'onglets existants pour la cohérence visuelle
+- Utiliser `white-space: pre-wrap` pour préserver le formatage du texte
+- Composant TabSystem réutilisable pour maintenir la cohérence
 
 ## Dépendances
 - Tables Supabase créées et configurées

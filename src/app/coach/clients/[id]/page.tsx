@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -116,8 +117,13 @@ type ClientProfilePageProps = {
   };
 };
 
-export default function ClientProfilePage() {
-  const params = useParams();
+export default function ClientProfilePage({ params }: ClientProfilePageProps) {
+  const router = useRouter();
+  
+  // In Next.js 14, we can use params directly in page components
+  // @ts-ignore - Ignorer l'avertissement Next.js pour l'accès direct à params.id
+  const clientId = params.id;
+
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [logs, setLogs] = useState<any[]>([]); // Utilisation de any pour éviter les conflits de types temporairement
   const [loading, setLoading] = useState(true);
@@ -127,7 +133,6 @@ export default function ClientProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [program, setProgram] = useState<Program | null>(null);
   const [programLoading, setProgramLoading] = useState(true);
-  const router = useRouter();
 
 
   const handleEditClick = (field: string, currentValue: string) => {
@@ -162,7 +167,14 @@ export default function ClientProfilePage() {
       
       try {
         setProgramLoading(true);
-        const activeProgram = await getActiveProgram(params.id as string);
+        const activeProgram = await getActiveProgram(params.id);
+        // S'assurer que les jours ont un day_order valide
+        if (activeProgram?.program_days) {
+          activeProgram.program_days = activeProgram.program_days.map((day, index) => ({
+            ...day,
+            day_order: day.day_order ?? index
+          }));
+        }
         setProgram(activeProgram);
       } catch (error) {
         console.error('Erreur lors du chargement du programme:', error);
@@ -181,25 +193,24 @@ export default function ClientProfilePage() {
       
       try {
         setLoading(true);
-        // Récupérer tous les clients et filtrer celui qui correspond à l'ID
+        
         const clients = await fetchClients();
         const clientProfile = clients.find(client => client.id === params.id);
         
         if (!clientProfile) {
           toast.error('Profil client non trouvé');
-          router.push('/coach/clients');
           return;
         }
         
         // Récupérer les logs du client
-        const logsData = await fetchClientLogs(params.id as string);
+        const logsData = await fetchClientLogs(params.id);
         
         setProfile(clientProfile);
         setLogs(logsData);
+        
       } catch (error) {
-        console.error('Erreur lors du chargement des données du client:', error);
-        toast.error('Erreur lors du chargement du profil client');
-        router.push('/coach/clients');
+        console.error('Erreur lors du chargement des données client:', error);
+        toast.error('Erreur lors du chargement des données client');
       } finally {
         setLoading(false);
       }
@@ -744,28 +755,41 @@ export default function ClientProfilePage() {
         <TabsContent value="suivi" className="space-y-6 mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Résumé des indicateurs</h3>
-            <MetricsSummary clientId={params.id as string} />
+            <MetricsSummary clientId={params.id} />
           </div>
           
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <LogHistory clientId={params.id as string} />
+            <LogHistory clientId={params.id} />
           </div>
         </TabsContent>
 
         {/* Contenu de l'onglet Programme */}
         <TabsContent value="programme" className="mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">Programme d'entraînement</h3>
-              <Link 
-                href={`/coach/clients/${params.id}/programme`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {program ? 'Modifier le programme' : 'Créer un programme'}
-              </Link>
+            <div className="mb-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Programme d'entraînement</h3>
+                <Link 
+                  href={
+                    {
+                      pathname: '/coach/clients/[id]/programme',
+                      query: { id: params.id }
+                    }
+                  }
+                  as={`/coach/clients/${params.id}/programme`}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {program ? 'Modifier le programme' : 'Créer un programme'}
+                </Link>
+              </div>
+              {program && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Mis à jour le {new Date(program.updated_at).toLocaleDateString('fr-FR')}
+                </p>
+              )}
             </div>
             
-            {loading ? (
+            {programLoading ? (
               <div className="animate-pulse space-y-4">
                 <div className="h-6 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -773,15 +797,53 @@ export default function ClientProfilePage() {
               </div>
             ) : program ? (
               <div>
-                <div className="mb-4">
-                  <h4 className="text-md font-medium text-gray-900">{program.title}</h4>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Mis à jour le {new Date(program.updated_at).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-                <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
-                  {program.content}
-                </div>
+                {program.title && (
+                  <h4 className="text-md font-medium text-gray-900 mb-4">{program.title}</h4>
+                )}
+                
+                {program.program_days && program.program_days.length > 0 ? (
+                  <div className="w-full">
+                    <Tabs 
+                      defaultValue={program.program_days[0]?.id || '0'}
+                      className="w-full"
+                    >
+                      <div className="relative">
+                        <TabsList className="mb-4 w-full overflow-x-auto flex-nowrap justify-start">
+                          {program.program_days
+                            .sort((a, b) => (a.day_order || 0) - (b.day_order || 0))
+                            .map((day) => (
+                              <TabsTrigger 
+                                key={day.id}
+                                value={day.id}
+                                className="text-sm whitespace-nowrap"
+                              >
+                                {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
+                              </TabsTrigger>
+                            ))}
+                        </TabsList>
+                      </div>
+                      
+                      {program.program_days
+                        .sort((a, b) => (a.day_order || 0) - (b.day_order || 0))
+                        .map((day) => (
+                          <TabsContent key={day.id} value={day.id} className="mt-0">
+                            <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg">
+                              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                                {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
+                              </h3>
+                              <div className="whitespace-pre-line">
+                                {day.content || 'Aucun contenu défini pour ce jour.'}
+                              </div>
+                            </div>
+                          </TabsContent>
+                        ))}
+                    </Tabs>
+                  </div>
+                ) : (
+                  <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
+                    Aucun contenu de programme disponible.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8">
@@ -790,7 +852,11 @@ export default function ClientProfilePage() {
                 <p className="mt-1 text-sm text-gray-500">Créez un programme personnalisé pour ce client.</p>
                 <div className="mt-6">
                   <Link
-                    href={`/coach/clients/${params.id}/programme`}
+                    href={{
+                      pathname: '/coach/clients/[id]/programme',
+                      query: { id: params.id }
+                    }}
+                    as={`/coach/clients/${params.id}/programme`}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Créer un programme
