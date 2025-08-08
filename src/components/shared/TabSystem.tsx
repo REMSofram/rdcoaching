@@ -13,11 +13,14 @@ const scrollbarHideStyles = {
   '&::-webkit-scrollbar': { display: 'none' },
 };
 
+type DayType = 'program' | 'nutrition';
+
 interface TabSystemProps {
   days: ProgramDay[];
   onDaysChange?: (days: ProgramDayInput[]) => void;
   readOnly?: boolean;
   className?: string;
+  dayType?: DayType;
 }
 
 /**
@@ -32,6 +35,7 @@ export const TabSystem: React.FC<TabSystemProps> = ({
   onDaysChange,
   readOnly = false,
   className = '',
+  dayType = 'program',
 }) => {
   const [activeTab, setActiveTab] = useState<string>('0');
   const [showScrollLeft, setShowScrollLeft] = useState(false);
@@ -87,9 +91,17 @@ export const TabSystem: React.FC<TabSystemProps> = ({
   const handleAddDay = useCallback(() => {
     if (readOnly || !onDaysChange) return;
     
+    const dayTitle = dayType === 'nutrition' 
+      ? `Jour ${days.length + 1} - Nutrition`
+      : `Jour ${days.length + 1} - Nouveau`;
+      
+    const defaultContent = dayType === 'nutrition'
+      ? '## Petit-déjeuner\n- \n\n## Déjeuner\n- \n\n## Collation\n- \n\n## Dîner\n- '
+      : '';
+    
     const newDay: ProgramDayInput = {
-      day_title: `Jour ${days.length + 1} - Nouveau`,
-      content: '',
+      day_title: dayTitle,
+      content: defaultContent,
       day_order: days.length,
     };
     
@@ -313,7 +325,9 @@ export const TabSystem: React.FC<TabSystemProps> = ({
                       placeholder={
                         readOnly 
                           ? 'Aucun contenu pour ce jour.' 
-                          : 'Détaillez les exercices, séries, répétitions...\nExemple :\n- Développé couché : 4x8-12\n- Écarté couché : 3x12-15'
+                          : dayType === 'nutrition'
+                            ? 'Détaillez vos repas et collations...\nExemple :\n## Petit-déjeuner\n- Omelette aux épinards et avocat\n- Pain complet\n- Thé vert\n\n## Déjeuner\n- Poulet grillé\n- Quinoa et légumes grillés\n- Yaourt nature'
+                            : 'Détaillez les exercices, séries, répétitions...\nExemple :\n- Développé couché : 4x8-12\n- Écarté couché : 3x12-15'
                       }
                       readOnly={readOnly}
                     />

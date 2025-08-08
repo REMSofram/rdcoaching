@@ -107,17 +107,18 @@ export default function ProgrammePage() {
     <div className="p-6">
       <BackButton />
       
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Votre programme</h1>
-        <span className="text-sm text-gray-500">
-          Mis à jour le {new Date(program.updated_at).toLocaleDateString('fr-FR')}
-        </span>
+      <div className="flex justify-between items-start mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {program.title || 'Mon programme'}
+        </h1>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">
+            Mis à jour le {new Date(program.updated_at).toLocaleDateString('fr-FR')}
+          </p>
+        </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">{program.title}</h2>
-        </div>
+      <div className="bg-white shadow rounded-lg overflow-hidden">
         
         {program.program_days && program.program_days.length > 0 ? (
           <TabSystem 

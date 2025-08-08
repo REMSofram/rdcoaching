@@ -1,0 +1,309 @@
+# Task Nutrition: Gestion des programmes nutritionnels
+
+## Overview
+**Priority:** High  
+**Dependencies:** Task 4 (Structure & Layouts), Task Programme (pour réutiliser TabSystem)  
+**Status:** Pending  
+
+## Description
+Implémenter la fonctionnalité de gestion des programmes nutritionnels permettant au coach de créer et assigner des plans nutritionnels aux clients, et aux clients de consulter leurs plans assignés. Fonctionnement identique aux programmes d'entraînement avec des onglets pour différents jours (ex: jour ON/OFF, weekdays/weekend, etc.).
+
+## Details
+Créer l'interface de gestion des programmes nutritionnels côté coach et l'affichage côté client, avec persistance en base de données Supabase. Réutiliser le même système d'onglets et la même logique que les programmes d'entraînement.
+
+## Test Strategy
+1. Vérifier que le coach peut créer et assigner des plans nutritionnels
+2. Tester que les clients voient uniquement leurs plans assignés
+3. Vérifier la persistance des données en base
+4. Tester la cohérence UI avec le design existant
+5. Tester la navigation entre onglets nutritionnels
+
+## Subtasks
+
+### 6.1 Créer le schéma base de données
+- **Description:** Ajouter les tables `nutrition_programs` et `nutrition_days` dans Supabase
+- **Tables à créer:**
+  ```sql
+  -- Table nutrition_programs
+  CREATE TABLE nutrition_programs (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    coach_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+    client_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    is_active boolean DEFAULT true,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+  );
+
+  -- Table nutrition_days
+  CREATE TABLE nutrition_days (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    nutrition_program_id uuid REFERENCES nutrition_programs(id) ON DELETE CASCADE,
+    day_title text NOT NULL,
+    content text NOT NULL,
+    day_order integer NOT NULL,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+  );
+
+  -- Index pour performance
+  CREATE INDEX idx_nutrition_programs_client_id ON nutrition_programs(client_id);
+  CREATE INDEX idx_nutrition_days_program_id ON nutrition_days(nutrition_program_id);
+  CREATE INDEX idx_nutrition_days_order ON nutrition_days(nutrition_program_id, day_order);
+  ```
+- **RLS Policies:**
+  ```sql
+  -- Policies pour nutrition_programs
+  ALTER TABLE nutrition_programs ENABLE ROW LEVEL SECURITY;
+  
+  CREATE POLICY "Coaches can manage their clients' nutrition programs" ON nutrition_programs
+    FOR ALL USING (coach_id = auth.uid());
+  
+  CREATE POLICY "Clients can view their nutrition programs" ON nutrition_programs
+    FOR SELECT USING (client_id = auth.uid());
+
+  -- Policies pour nutrition_days
+  ALTER TABLE nutrition_days ENABLE ROW LEVEL SECURITY;
+  
+  CREATE POLICY "Coaches can manage nutrition days" ON nutrition_days
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM nutrition_programs 
+        WHERE id = nutrition_program_id AND coach_id = auth.uid()
+      )
+    );
+  
+  CREATE POLICY "Clients can view their nutrition days" ON nutrition_days
+    FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM nutrition_programs 
+        WHERE id = nutrition_program_id AND client_id = auth.uid()
+      )
+    );
+  ```
+- **Estimated Time:** 20 minutes
+
+### 6.2 Créer les types TypeScript
+- **Description:** Ajouter `types/Nutrition.ts` avec les interfaces pour programmes et jours nutritionnels
+- **Interfaces à créer:**
+  ```typescript
+  interface NutritionProgram {
+    id: string;
+    coach_id: string;
+    client_id: string;
+    title: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    nutrition_days?: NutritionDay[];
+  }
+  
+  interface NutritionDay {
+    id: string;
+    nutrition_program_id: string;
+    day_title: string;
+    content: string;
+    day_order: number;
+    created_at: string;
+    updated_at: string;
+  }
+  
+  interface CreateNutritionProgramInput {
+    client_id: string;
+    title: string;
+    days: {
+      day_title: string;
+      content: string;
+      day_order: number;
+    }[];
+  }
+  
+  interface UpdateNutritionProgramInput {
+    title: string;
+    days: {
+      id?: string; // undefined pour nouveaux jours
+      day_title: string;
+      content: string;
+      day_order: number;
+    }[];
+  }
+  ```
+- **Estimated Time:** 15 minutes
+
+### 6.3 Créer les services API Supabase
+- **Description:** Créer `lib/nutritionService.ts` avec les fonctions CRUD pour programmes et jours nutritionnels
+- **Fonctions à implémenter:**
+  ```typescript
+  export class NutritionService {
+    // Programme principal
+    static async createNutritionProgram(
+      clientId: string, 
+      title: string, 
+      days: { day_title: string; content: string; day_order: number }[]
+    ): Promise<NutritionProgram>
+
+    static async updateNutritionProgram(
+      programId: string, 
+      title: string, 
+      days: UpdateNutritionProgramInput['days']
+    ): Promise<NutritionProgram>
+
+    static async getNutritionProgramWithDays(clientId: string): Promise<NutritionProgram | null>
+
+    static async deleteNutritionProgram(programId: string): Promise<void>
+
+    // Jours nutritionnels
+    static async addNutritionDay(
+      programId: string, 
+      dayTitle: string, 
+      content: string, 
+      order: number
+    ): Promise<NutritionDay>
+
+    static async updateNutritionDay(
+      dayId: string, 
+      dayTitle: string, 
+      content: string
+    ): Promise<NutritionDay>
+
+    static async deleteNutritionDay(dayId: string): Promise<void>
+
+    static async reorderNutritionDays(
+      programId: string, 
+      newOrder: { id: string; order: number }[]
+    ): Promise<void>
+  }
+  ```
+- **Logique:** Un client = un seul programme nutritionnel actif avec plusieurs jours
+- **Estimated Time:** 50 minutes
+
+### 6.4 Créer la page de création/édition de programme côté Coach
+- **Description:** Page avec onglets `pages/coach/client/[id]/nutrition.tsx`
+- **Fonctionnalités:**
+  - Titre général du programme nutritionnel en haut
+  - Système d'onglets horizontaux (réutiliser TabSystem existant)
+  - Chaque onglet = un jour nutritionnel (ex: "Jour ON", "Jour OFF", "Lundi", "Mardi", etc.)
+  - Bouton "+" pour ajouter un nouveau jour
+  - Dans chaque onglet : titre du jour + grande textarea pour le contenu nutritionnel
+  - Bouton "Enregistrer" global qui sauvegarde tout le programme
+  - Bouton "Supprimer ce jour" sur chaque onglet (sauf s'il n'y en a qu'un)
+  - Possibilité de réorganiser l'ordre des onglets
+  - État de chargement et gestion d'erreurs
+- **UI:** Réutiliser exactement le même style que la page programme
+- **Estimated Time:** 80 minutes
+
+### 6.5 Créer la page Nutrition côté Client
+- **Description:** Créer `pages/client/nutrition.tsx` avec onglets
+- **Fonctionnalités:**
+  - Titre du programme nutritionnel en haut avec date de mise à jour
+  - Système d'onglets horizontaux (réutiliser TabSystem)
+  - Chaque onglet = un jour nutritionnel
+  - Contenu affiché avec formatage préservé (white-space: pre-wrap)
+  - Message si aucun programme assigné : "Aucun programme nutritionnel disponible pour le moment"
+  - Navigation fluide entre les onglets
+  - Affichage en lecture seule uniquement
+  - État de chargement
+- **UI:** Cohérent avec le design client existant (identique à la page programme client)
+- **Estimated Time:** 40 minutes
+
+### 6.6 Intégrer dans la navigation existante
+- **Description:** Activer les liens "Nutrition" dans les sidebars
+- **Modifications:**
+  - Activer l'onglet "Nutrition" dans `CoachLayout.tsx` pour la page client
+  - Activer l'onglet "Nutrition" dans `ClientLayout.tsx`
+  - Vérifier le routing et les liens vers `/coach/client/[id]/nutrition` et `/client/nutrition`
+  - S'assurer que les icônes et styles sont cohérents
+- **Estimated Time:** 15 minutes
+
+### 6.7 Ajouter la gestion des permissions et sécurité
+- **Description:** Vérifier que seul le coach peut modifier, seul le client peut voir son programme nutritionnel
+- **Sécurité:**
+  - RLS policies dans Supabase (déjà définies en 6.1)
+  - Vérifications côté client pour l'affichage
+  - Protection des routes avec middleware
+  - Validation des données côté serveur
+- **Estimated Time:** 25 minutes
+
+### 6.8 Créer des hooks personnalisés
+- **Description:** Créer des hooks React pour gérer l'état des programmes nutritionnels
+- **Hooks à créer:**
+  ```typescript
+  // hooks/useNutritionProgram.ts
+  export function useNutritionProgram(clientId?: string) {
+    // Logique pour charger/sauvegarder programme nutritionnel
+    // États: loading, error, program, updateProgram, deleteProgram
+  }
+
+  // hooks/useNutritionDays.ts  
+  export function useNutritionDays(programId?: string) {
+    // Logique pour gérer les jours nutritionnels
+    // États: days, addDay, updateDay, deleteDay, reorderDays
+  }
+  ```
+- **Estimated Time:** 35 minutes
+
+### 6.9 Tests et validation
+- **Description:** Tester l'ensemble de la fonctionnalité nutrition
+- **Tests à effectuer:**
+  - Création de programme nutritionnel côté coach
+  - Modification et suppression de jours nutritionnels
+  - Affichage côté client avec navigation entre onglets
+  - Gestion des cas d'erreur (pas de programme, erreurs réseau)
+  - Cohérence UI avec le reste de l'application
+  - Responsive design sur mobile/tablette
+  - Test des permissions (coach vs client)
+  - Performance avec plusieurs jours nutritionnels
+- **Estimated Time:** 35 minutes
+
+### 6.10 Optimisations et finitions
+- **Description:** Améliorations de l'UX et optimisations
+- **Améliorations:**
+  - Auto-sauvegarde en draft pendant la saisie
+  - Indication visuelle des modifications non sauvegardées
+  - Raccourcis clavier pour navigation onglets
+  - Validation en temps réel du contenu
+  - Messages de confirmation pour les suppressions
+  - Optimisation du chargement des données
+- **Estimated Time:** 30 minutes
+
+### 6.11 Améliorations futures (hors scope MVP)
+- **Description:** Fonctionnalités à considérer pour les versions futures
+- **Idées d'améliorations:**
+  - Templates de programmes nutritionnels prédéfinis
+  - Calcul automatique des macros/calories
+  - Intégration avec base de données d'aliments
+  - Photos des repas/plats
+  - Planning de repas avec horaires
+  - Export PDF des programmes nutritionnels
+  - Suivi de l'adhérence client
+  - Historique des modifications
+  - Commentaires/feedback client sur les repas
+- **Note:** Ces améliorations viendront naturellement une fois le MVP validé
+
+## Total Estimated Time
+345 minutes (5 heures 45 minutes)
+
+## Notes techniques
+- Architecture identique aux programmes d'entraînement
+- Deux tables : `nutrition_programs` et `nutrition_days`
+- Un client = un seul programme nutritionnel actif avec plusieurs jours
+- Réutilisation du composant TabSystem existant
+- Interface côté coach : création/édition avec gestion des onglets
+- Interface côté client : consultation avec navigation par onglets
+- Utiliser `white-space: pre-wrap` pour préserver le formatage du texte
+- Gestion d'état avec React hooks personnalisés
+- Validation et sécurité côté client et serveur
+
+## Dépendances
+- Tables Supabase créées et configurées avec RLS
+- Types TypeScript définis
+- Services API implémentés avant les composants UI  
+- Composant TabSystem existant du module Programme
+- Tests de bout en bout après implémentation complète
+- Hooks personnalisés pour la gestion d'état
+
+## Migration et déploiement
+- Scripts de migration SQL pour créer les nouvelles tables
+- Mise à jour des permissions Supabase
+- Tests en environnement de développement avant production
+- Documentation utilisateur pour les nouveaux features

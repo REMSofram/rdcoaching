@@ -63,6 +63,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getActiveProgram } from '@/services/programService';
 import { Program } from '@/types/Program';
+import { NutritionProgram } from '@/types/Nutrition';
+import { getActiveNutritionProgram } from '@/services/nutritionService';
 import {
   Dialog,
   DialogContent,
@@ -115,14 +117,17 @@ type ClientProfilePageProps = {
   params: {
     id: string;
   };
+  searchParams?: {
+    tab?: string;
+  };
 };
 
-export default function ClientProfilePage({ params }: ClientProfilePageProps) {
+export default function ClientProfilePage({ params, searchParams = {} }: ClientProfilePageProps) {
   const router = useRouter();
   
-  // In Next.js 14, we can use params directly in page components
-  // @ts-ignore - Ignorer l'avertissement Next.js pour l'accès direct à params.id
+  // Accès direct aux paramètres dans Next.js 14
   const clientId = params.id;
+  const activeTab = searchParams.tab || 'profil';
 
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [logs, setLogs] = useState<any[]>([]); // Utilisation de any pour éviter les conflits de types temporairement
@@ -133,6 +138,8 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [program, setProgram] = useState<Program | null>(null);
   const [programLoading, setProgramLoading] = useState(true);
+  const [nutritionProgram, setNutritionProgram] = useState<NutritionProgram | null>(null);
+  const [nutritionLoading, setNutritionLoading] = useState(true);
 
 
   const handleEditClick = (field: string, currentValue: string) => {
@@ -160,7 +167,7 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
     }
   };
 
-  // Charger le programme actif du client
+  // Charger le programme d'entraînement actif du client
   useEffect(() => {
     const loadProgram = async () => {
       if (!params.id) return;
@@ -177,14 +184,41 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
         }
         setProgram(activeProgram);
       } catch (error) {
-        console.error('Erreur lors du chargement du programme:', error);
-        toast.error('Erreur lors du chargement du programme');
+        console.error('Erreur lors du chargement du programme d\'entraînement:', error);
+        toast.error('Erreur lors du chargement du programme d\'entraînement');
       } finally {
         setProgramLoading(false);
       }
     };
     
     loadProgram();
+  }, [params.id]);
+
+  // Charger le programme nutritionnel actif du client
+  useEffect(() => {
+    const loadNutritionProgram = async () => {
+      if (!params.id) return;
+      
+      try {
+        setNutritionLoading(true);
+        const activeNutritionProgram = await getActiveNutritionProgram(params.id);
+        // S'assurer que les jours ont un day_order valide
+        if (activeNutritionProgram?.nutrition_days) {
+          activeNutritionProgram.nutrition_days = activeNutritionProgram.nutrition_days.map((day: any, index: number) => ({
+            ...day,
+            day_order: day.day_order ?? index
+          }));
+        }
+        setNutritionProgram(activeNutritionProgram);
+      } catch (error) {
+        console.error('Erreur lors du chargement du programme nutritionnel:', error);
+        toast.error('Erreur lors du chargement du programme nutritionnel');
+      } finally {
+        setNutritionLoading(false);
+      }
+    };
+    
+    loadNutritionProgram();
   }, [params.id]);
 
   useEffect(() => {
@@ -870,10 +904,104 @@ export default function ClientProfilePage({ params }: ClientProfilePageProps) {
         {/* Contenu de l'onglet Nutrition */}
         <TabsContent value="nutrition" className="mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Suivi nutritionnel</h3>
-            <p className="text-sm text-gray-600">
-              Cette fonctionnalité sera bientôt disponible. Vous pourrez bientôt suivre et gérer la nutrition de vos clients.
-            </p>
+            <div className="mb-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Programme nutritionnel</h3>
+                <Link 
+                  href={
+                    {
+                      pathname: '/coach/clients/[id]/nutrition',
+                      query: { id: params.id }
+                    }
+                  }
+                  as={`/coach/clients/${params.id}/nutrition`}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {nutritionProgram ? 'Modifier le programme' : 'Créer un programme'}
+                </Link>
+              </div>
+              {nutritionProgram && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Mis à jour le {new Date(nutritionProgram.updated_at).toLocaleDateString('fr-FR')}
+                </p>
+              )}
+            </div>
+            
+            {nutritionLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            ) : nutritionProgram ? (
+              <div>
+                {nutritionProgram.title && (
+                  <h4 className="text-md font-medium text-gray-900 mb-4">{nutritionProgram.title}</h4>
+                )}
+                
+                {nutritionProgram.nutrition_days && nutritionProgram.nutrition_days.length > 0 ? (
+                  <div className="w-full">
+                    <Tabs 
+                      defaultValue={nutritionProgram.nutrition_days[0]?.id || '0'}
+                      className="w-full"
+                    >
+                      <div className="relative">
+                        <TabsList className="mb-4 w-full overflow-x-auto flex-nowrap justify-start">
+                          {nutritionProgram.nutrition_days
+                            .sort((a: { day_order?: number }, b: { day_order?: number }) => (a.day_order || 0) - (b.day_order || 0))
+                            .map((day: { id: string; day_order?: number; day_title?: string }) => (
+                              <TabsTrigger 
+                                key={day.id}
+                                value={day.id}
+                                className="text-sm whitespace-nowrap"
+                              >
+                                {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
+                              </TabsTrigger>
+                            ))}
+                        </TabsList>
+                      </div>
+                      
+                      {nutritionProgram.nutrition_days
+                        .sort((a: { day_order?: number }, b: { day_order?: number }) => (a.day_order || 0) - (b.day_order || 0))
+                        .map((day: { id: string; day_order?: number; day_title?: string; content?: string }) => (
+                          <TabsContent key={day.id} value={day.id} className="mt-0">
+                            <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg">
+                              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                                {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
+                              </h3>
+                              <div className="whitespace-pre-line">
+                                {day.content || 'Aucun contenu défini pour ce jour.'}
+                              </div>
+                            </div>
+                          </TabsContent>
+                        ))}
+                    </Tabs>
+                  </div>
+                ) : (
+                  <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
+                    Aucun contenu de programme nutritionnel disponible.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Utensils className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun programme nutritionnel défini</h3>
+                <p className="mt-1 text-sm text-gray-500">Créez un programme nutritionnel personnalisé pour ce client.</p>
+                <div className="mt-6">
+                  <Link
+                    href={{
+                      pathname: '/coach/clients/[id]/nutrition',
+                      query: { id: params.id }
+                    }}
+                    as={`/coach/clients/${params.id}/nutrition`}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Créer un programme nutritionnel
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 

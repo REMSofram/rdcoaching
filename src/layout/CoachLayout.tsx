@@ -11,6 +11,7 @@ import {
   BarChart2,
   Settings,
   MessageSquare,
+  Utensils,
 } from "lucide-react";
 import { useState } from "react";
 
