@@ -48,6 +48,7 @@ export const createProgram = async (programData: CreateProgramInput): Promise<Pr
     program_data: {
       client_id: programData.client_id,
       title: programData.title,
+      content: programData.content || '', // Ajout du champ content avec une valeur par défaut
       is_active: true
     },
     days_data: programData.days

@@ -6,6 +6,7 @@
 - [Flux d'Authentification](#-flux-dauthentification)
 - [Gestion des Rôles](#-gestion-des-rôles)
 - [Structure des Routes](#-structure-des-routes)
+- [Services Backend](#-services-backend)
 - [Sécurité](#-sécurité)
 - [Variables d'Environnement](#-variables-denvironnement)
 
@@ -51,7 +52,52 @@ Le fichier `middleware.ts` gère toutes les requêtes entrantes et applique une 
 
 ## 🏋️‍♂️ Gestion des Programmes d'Entraînement
 
-### Services Disponibles (`src/services/programService.ts`)
+### Services Disponibles
+
+#### `programService.ts`
+Gestion complète des programmes d'entraînement et de leurs jours associés.
+
+**Fonctions principales :**
+- `getActiveProgram(clientId: string)` : Récupère le programme actif d'un client avec ses jours
+- `createProgram(programData: CreateProgramInput)` : Crée un nouveau programme
+- `updateProgram(programId: string, updates: UpdateProgramInput)` : Met à jour un programme existant
+- `deleteProgram(programId: string)` : Supprime un programme et ses jours associés
+- `getProgramDay(dayId: string)` : Récupère un jour spécifique
+- `updateProgramDay(dayId: string, updates: Partial<ProgramDayInput>)` : Met à jour un jour
+- `deleteProgramDay(dayId: string)` : Supprime un jour
+- `getAllPrograms()` : Récupère tous les programmes (coachs uniquement)
+- `getClientPrograms(clientId: string)` : Récupère tous les programmes d'un client spécifique
+
+#### `clientService.ts`
+Gestion des profils clients et de leurs données associées.
+
+**Fonctions principales :**
+- `fetchClients()` : Récupère la liste des clients (coachs uniquement)
+- `fetchClientLogs(clientId: string)` : Récupère les journaux d'un client
+- `updateClientProfile(clientId: string, updates: Partial<ClientProfile>)` : Met à jour le profil d'un client
+
+#### `dailyLogService.ts`
+Gestion des journaux quotidiens des clients.
+
+**Fonctions principales :**
+- `createDailyLog(logData: Omit<DailyLog, 'id' | 'created_at' | 'updated_at'>)` : Crée une nouvelle entrée de journal
+- `getLogByDate(clientId: string, date: string)` : Récupère le journal d'une date spécifique
+- `updateDailyLog(id: string, updates: Partial<DailyLog>)` : Met à jour une entrée de journal
+- `getClientLogs(clientId: string)` : Récupère tous les journaux d'un client
+
+#### `nutritionService.ts`
+Gestion des programmes nutritionnels et de leurs jours associés.
+
+**Fonctions principales :**
+- `getActiveNutritionProgram(clientId: string)` : Récupère le programme nutritionnel actif
+- `createNutritionProgram(programData: CreateNutritionProgramInput)` : Crée un nouveau programme nutritionnel
+- `updateNutritionProgram(programId: string, updates: UpdateNutritionProgramInput)` : Met à jour un programme existant
+- `deleteNutritionProgram(programId: string)` : Supprime un programme et ses jours associés
+- `getNutritionDay(dayId: string)` : Récupère un jour spécifique
+- `updateNutritionDay(dayId: string, updates: Partial<NutritionDayInput>)` : Met à jour un jour
+- `deleteNutritionDay(dayId: string)` : Supprime un jour
+- `getAllNutritionPrograms()` : Récupère tous les programmes (coachs uniquement)
+- `getClientNutritionPrograms(clientId: string)` : Récupère tous les programmes d'un client spécifique
 
 1. **Récupérer le programme actif d'un client**
    ```typescript
@@ -124,57 +170,104 @@ L'application distingue deux rôles principaux :
 /auth/login
 /auth/signup
 /auth/verify-email
+/auth/forgot-password
+/auth/reset-password
+/error
+/not-found
 ```
 
 ### Routes Protégées - Client
 ```
-/client/dashboard
-/client/suivi
-/client/calendrier
-/client/nutrition
-/client/profile
-/client/programme
+/client/dashboard           # Tableau de bord client
+/client/suivi              # Suivi des progrès et statistiques
+/client/calendrier         # Calendrier des séances et événements
+/client/nutrition          # Programme alimentaire et suivi nutritionnel
+/client/nutrition/[id]     # Détails d'un programme nutritionnel
+/client/profile            # Gestion du profil utilisateur
+/client/programme          # Programme d'entraînement actuel
+/client/programme/[id]     # Détails d'un programme spécifique
+/client/objectifs          # Gestion des objectifs
+/client/mesures            # Suivi des mesures corporelles
 ```
 
 ### Routes Protégées - Coach
 ```
-/coach/dashboard
-/coach/clients
-/coach/clients/[id]
-/coach/profile
+/coach/dashboard           # Tableau de bord coach
+/coach/clients             # Liste des clients
+/coach/clients/[id]        # Profil détaillé d'un client
+/coach/clients/[id]/suivi  # Suivi détaillé d'un client
+/coach/programs            # Gestion des programmes
+/coach/nutrition           # Gestion des programmes nutritionnels
+/coach/calendar            # Calendrier des séances
+/coach/profile             # Profil coach
+/coach/settings            # Paramètres du compte
+```
+
+### Routes d'Administration
+```
+/admin/dashboard           # Tableau de bord administrateur
+/admin/users               # Gestion des utilisateurs
+/admin/settings            # Paramètres de l'application
+/admin/logs                # Journaux d'activité
 ```
 
 ### Autres Routes
 ```
-/onboarding
-/error
-/not-found
+/onboarding               # Processus d'intégration des nouveaux utilisateurs
+/error                    # Page d'erreur générique
+/not-found                # Page 404
+/maintenance             # Page de maintenance
+/terms                   # Conditions d'utilisation
+/privacy                 # Politique de confidentialité
+/contact                 # Page de contact
 ```
 
 ## 🔒 Sécurité
 
 ### Protection des Routes
-- Vérification de session côté serveur
-- Protection contre les attaques CSRF
-- Validation des entrées utilisateur
+- Vérification de session côté serveur pour toutes les routes protégées
+- Protection contre les attaques CSRF via les en-têtes appropriés
+- Validation stricte des entrées utilisateur avec des schémas de validation
+- Protection contre les injections SQL via l'utilisation de requêtes paramétrées
 
 ### Gestion des Sessions
-- Stockage sécurisé des tokens
-- Rafraîchissement automatique des sessions
-- Invalidation des sessions expirées
+- Stockage sécurisé des tokens dans des cookies HTTPOnly et Secure
+- Rafraîchissement automatique des sessions avant expiration
+- Invalidation des sessions expirées et compromises
+- Rotation des tokens de rafraîchissement
 
 ### Politiques d'Accès
-- Accès basé sur les rôles
-- Vérification des permissions pour chaque ressource
-- Journalisation des accès sensibles
+- Accès basé sur les rôles avec vérification côté serveur
+- Vérification des permissions au niveau des ressources
+- Principe du moindre privilège appliqué systématiquement
+- Journalisation détaillée des accès sensibles et des modifications de données
+- Protection contre les attaques par force brute sur l'authentification
+
+### Bonnes Pratiques
+- Hachage sécurisé des mots de passe (bcrypt)
+- Protection contre les attaques XSS via l'échappement des données
+- Headers de sécurité HTTP (CSP, HSTS, etc.)
+- Validation des types de fichiers pour les téléversements
+- Limitation des tentatives de connexion
 
 ## ⚙️ Variables d'Environnement
 
-| Variable | Description | Requis |
-|----------|-------------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL de l'instance Supabase | Oui |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anonyme Supabase | Oui |
-| `NEXT_PUBLIC_SITE_URL` | URL de l'application (pour les redirections) | Non |
+| Variable | Description | Requis | Valeur par défaut |
+|----------|-------------|--------|------------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de l'instance Supabase | Oui | - |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anonyme Supabase | Oui | - |
+| `NEXT_PUBLIC_SITE_URL` | URL de base de l'application (pour les redirections, emails, etc.) | Oui | http://localhost:3000 |
+| `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` | Clé de service Supabase (côté serveur uniquement) | Oui (production) | - |
+| `NODE_ENV` | Environnement d'exécution (development, production, test) | Non | development |
+| `NEXT_PUBLIC_APP_ENV` | Environnement d'application (dev, staging, prod) | Non | dev |
+
+### Configuration requise pour les emails
+Les variables suivantes sont nécessaires pour l'envoi d'emails (vérification, réinitialisation de mot de passe, etc.) :
+- `EMAIL_SERVER_HOST`
+- `EMAIL_SERVER_PORT`
+- `EMAIL_SERVER_USER`
+- `EMAIL_SERVER_PASSWORD`
+- `EMAIL_FROM`
 
 ## 🔄 Workflow de Développement
 

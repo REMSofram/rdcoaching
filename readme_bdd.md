@@ -2,6 +2,7 @@
 
 ## 📋 Table des matières
 - [Structure des Tables](#-structure-des-tables)
+- [Relations entre les Tables](#-relations-entre-les-tables)
 - [Politiques de Sécurité (RLS)](#-politiques-de-sécurité-rls)
 - [Triggers et Fonctions](#-triggers-et-fonctions)
 - [Sécurité et Bonnes Pratiques](#-sécurité-et-bonnes-pratiques)
@@ -15,7 +16,7 @@ Stocke les informations des utilisateurs (clients et coachs).
 | Colonne | Type | Description |
 |---------|------|-------------|
 | `id` | UUID | Clé primaire, référence l'utilisateur Auth |
-| `email` | text | Email de l'utilisateur |
+| `email` | text | Email de l'utilisateur (unique) |
 | `first_name` | text | Prénom |
 | `last_name` | text | Nom |
 | `birth_date` | date | Date de naissance |
@@ -25,8 +26,8 @@ Stocke les informations des utilisateurs (clients et coachs).
 | `sports_practiced` | ARRAY | Liste des sports pratiqués |
 | `objectives` | text | Objectifs de l'utilisateur |
 | `injuries` | text | Blessures ou problèmes de santé connus |
-| `role` | user_role | 'client' ou 'coach' (enum) |
-| `is_onboarded` | boolean | Si l'utilisateur a complété l'onboarding |
+| `role` | user_role | 'client' ou 'coach' (enum), par défaut 'client' |
+| `is_onboarded` | boolean | Si l'utilisateur a complété l'onboarding (défaut: false) |
 | `created_at` | timestamp with time zone | Date de création |
 | `updated_at` | timestamp with time zone | Dernière mise à jour |
 
@@ -35,15 +36,15 @@ Journal des entrées quotidiennes des clients.
 
 | Colonne | Type | Description |
 |---------|------|-------------|
-| `id` | UUID | Clé primaire |
-| `client_id` | UUID | Référence au client |
+| `id` | UUID | Clé primaire (généré automatiquement) |
+| `client_id` | UUID | Référence au client (clé étrangère vers profiles.id) |
 | `weight` | numeric | Poids (kg) |
 | `energy_level` | integer | Niveau d'énergie (échelle 1-10) |
 | `sleep_quality` | integer | Qualité du sommeil (échelle 1-10) |
 | `appetite` | text | Appétit de la journée |
 | `notes` | text | Notes personnelles |
-| `created_at` | timestamp with time zone | Date de création |
-| `log_date` | date | Date du journal (par défaut: date du jour) |
+| `created_at` | timestamp with time zone | Date de création (par défaut: maintenant) |
+| `log_date` | date | Date du journal (par défaut: date du jour, unique) |
 | `training_type` | text | Type d'entraînement effectué |
 | `plaisir_seance` | integer | Plaisir ressenti pendant la séance (échelle 1-10) |
 | `sleep_hours` | numeric | Nombre d'heures de sommeil |
@@ -54,68 +55,235 @@ Programmes d'entraînement personnalisés pour les clients.
 
 | Colonne | Type | Description |
 |---------|------|-------------|
-| `id` | UUID | Clé primaire |
-| `client_id` | UUID | Référence au client |
+| `id` | UUID | Clé primaire (généré automatiquement) |
+| `client_id` | UUID | Référence au client (clé étrangère vers profiles.id) |
 | `title` | text | Titre du programme |
 | `content` | text | Contenu détaillé du programme |
-| `is_active` | boolean | Si le programme est actif (un seul par client) |
+| `is_active` | boolean | Si le programme est actif (un seul par client, défaut: true) |
 | `created_at` | timestamp with time zone | Date de création |
 | `updated_at` | timestamp with time zone | Date de dernière mise à jour |
 
+### Table: `program_days`
+Jours individuels dans un programme d'entraînement.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire (généré automatiquement) |
+| `program_id` | UUID | Référence au programme (clé étrangère vers programs.id) |
+| `day_title` | text | Titre du jour |
+| `content` | text | Contenu du jour (défaut: chaîne vide) |
+| `day_order` | integer | Ordre du jour dans le programme |
+| `created_at` | timestamp with time zone | Date de création |
+| `updated_at` | timestamp with time zone | Date de dernière mise à jour |
+
+### Table: `nutrition_programs`
+Programmes nutritionnels pour les clients.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire (généré automatiquement) |
+| `client_id` | UUID | Référence au client (clé étrangère vers profiles.id) |
+| `title` | text | Titre du programme nutritionnel |
+| `is_active` | boolean | Si le programme est actif (défaut: true) |
+| `created_at` | timestamp with time zone | Date de création |
+| `updated_at` | timestamp with time zone | Date de dernière mise à jour |
+
+### Table: `nutrition_days`
+Jours individuels dans un programme nutritionnel.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire (généré automatiquement) |
+| `nutrition_program_id` | UUID | Référence au programme nutritionnel (clé étrangère vers nutrition_programs.id) |
+| `day_title` | text | Titre du jour |
+| `content` | text | Contenu nutritionnel du jour |
+| `day_order` | integer | Ordre du jour dans le programme |
+| `created_at` | timestamp with time zone | Date de création |
+| `updated_at` | timestamp with time zone | Date de dernière mise à jour |
+
+## 🔗 Relations entre les Tables
+
+| Table source | Champ source | Table cible | Champ cible | Type de relation |
+|--------------|--------------|-------------|-------------|------------------|
+| `daily_logs` | `client_id` | `profiles` | `id` | Plusieurs logs peuvent appartenir à un utilisateur |
+| `programs` | `client_id` | `profiles` | `id` | Un utilisateur peut avoir plusieurs programmes |
+| `program_days` | `program_id` | `programs` | `id` | Un programme contient plusieurs jours |
+| `nutrition_programs` | `client_id` | `profiles` | `id` | Un utilisateur peut avoir plusieurs programmes nutritionnels |
+| `nutrition_days` | `nutrition_program_id` | `nutrition_programs` | `id` | Un programme nutritionnel contient plusieurs jours |
+
 ## 🔒 Politiques de Sécurité (RLS)
 
-### Politiques pour `programs`
-
-1. **Accès en lecture pour les coachs**
-   - Les coachs peuvent voir tous les programmes de tous les clients
-   - Condition : L'utilisateur doit avoir le rôle 'coach'
-
-2. **Accès en lecture pour les clients**
-   - Les clients ne peuvent voir que leur propre programme actif
-   - Condition : `client_id` doit correspondre à l'ID de l'utilisateur et `is_active` doit être `true`
-
-3. **Création pour les coachs**
-   - Seuls les coachs peuvent créer de nouveaux programmes
-   - Le champ `is_active` est automatiquement défini à `true`
-   - Les autres programmes du client sont automatiquement désactivés
-
-4. **Mise à jour pour les coachs**
-   - Seuls les coachs peuvent mettre à jour les programmes
-   - Permet de modifier le titre, le contenu et le statut actif
-
-5. **Suppression pour les coachs**
-   - Seuls les coachs peuvent supprimer des programmes
-   - La suppression est définitive (cascade si nécessaire)
-
-### Politiques pour `profiles`
+### Table: `profiles`
 
 1. **Lecture du profil**
-   ```sql
-   CREATE POLICY "Les utilisateurs peuvent voir leur propre profil"
-   ON profiles FOR SELECT
-   USING (auth.uid() = id);
-   ```
+   - **Nom de la politique**: "User can view own profile"
+   - **Accès**: Lecture (SELECT)
+   - **Rôles**: Tous les utilisateurs authentifiés
+   - **Condition**: L'utilisateur ne peut voir que son propre profil
 
 2. **Mise à jour du profil**
-   ```sql
-   CREATE POLICY "Les utilisateurs peuvent mettre à jour leur propre profil"
-   ON profiles FOR UPDATE
-   USING (auth.uid() = id);
-   ```
+   - **Nom de la politique**: "User can update own profile"
+   - **Accès**: Mise à jour (UPDATE)
+   - **Rôles**: Tous les utilisateurs authentifiés
+   - **Condition**: L'utilisateur ne peut mettre à jour que son propre profil
 
-### Politiques pour `daily_logs`
+3. **Accès coach aux profils**
+   - **Nom de la politique**: "Coaches can view all profiles"
+   - **Accès**: Lecture (SELECT)
+   - **Rôles**: Coach uniquement
+   - **Condition**: Vérifie si l'utilisateur est un coach
 
-1. **Lecture des journaux**
-   ```sql
-   CREATE POLICY "Les utilisateurs peuvent voir leurs propres journaux"
-   ON daily_logs FOR SELECT
-   USING (auth.uid() = user_id);
-   ```
+4. **Mise à jour par un coach**
+   - **Nom de la politique**: "Coaches can update client profiles"
+   - **Accès**: Mise à jour (UPDATE)
+   - **Rôles**: Coach uniquement
+   - **Condition**: Empêche un coach de se mettre à jour lui-même
 
-2. **Création de journaux**
-   ```sql
-   CREATE POLICY "Les utilisateurs peuvent créer des entrées dans leur journal"
-   ON daily_logs FOR INSERT
+### Table: `daily_logs`
+
+1. **Accès administrateur complet**
+   - **Accès**: Toutes les opérations
+   - **Condition**: Email spécifique (remy.denay6@gmail.com)
+
+2. **Lecture des journaux**
+   - **Nom de la politique**: "Allow read access to own logs"
+   - **Accès**: Lecture (SELECT)
+   - **Condition**: L'utilisateur ne peut voir que ses propres journaux
+
+3. **Création de journaux**
+   - **Nom de la politique**: "Allow insert own logs"
+   - **Accès**: Création (INSERT)
+   - **Rôles**: Utilisateurs authentifiés
+   - **Condition**: L'utilisateur ne peut créer que ses propres journaux
+
+4. **Mise à jour des journaux**
+   - **Nom de la politique**: "Allow update to own logs"
+   - **Accès**: Mise à jour (UPDATE)
+   - **Condition**: L'utilisateur ne peut mettre à jour que ses propres journaux
+
+### Table: `programs`
+
+1. **Lecture pour les clients**
+   - **Nom de la politique**: "Clients can view their own active program"
+   - **Accès**: Lecture (SELECT)
+   - **Condition**: L'utilisateur ne peut voir que son propre programme actif
+
+2. **Accès complet pour les coachs**
+   - **Politiques**: Plusieurs politiques pour la lecture, création, mise à jour et suppression
+   - **Accès**: Toutes les opérations
+   - **Rôles**: Coach uniquement
+   - **Condition**: Vérifie si l'utilisateur a le rôle 'coach'
+
+### Table: `program_days`
+
+1. **Lecture pour les clients**
+   - **Nom de la politique**: "Clients can view their own program days"
+   - **Accès**: Lecture (SELECT)
+   - **Condition**: L'utilisateur ne peut voir que les jours de son programme actif
+
+2. **Gestion par les coachs**
+   - **Politiques**: Séparées pour la lecture, création, mise à jour et suppression
+   - **Accès**: Toutes les opérations
+   - **Rôles**: Coach uniquement
+   - **Condition**: Vérifie si l'utilisateur est un coach
+
+### Table: `nutrition_programs`
+
+1. **Gestion des programmes nutritionnels**
+   - **Nom de la politique**: "Les clients peuvent gérer leurs programmes nutritionnels"
+   - **Accès**: Toutes les opérations
+   - **Condition**: L'utilisateur ne peut gérer que ses propres programmes
+
+### Table: `nutrition_days`
+
+1. **Gestion des jours de programme**
+   - **Nom de la politique**: "Les clients peuvent gérer les jours de leur programme nutritionnel"
+   - **Accès**: Toutes les opérations
+   - **Condition**: L'utilisateur ne peut gérer que les jours de ses propres programmes
+
+## ⚙️ Triggers et Fonctions
+
+### Triggers
+
+#### Table: `profiles`
+1. **update_profiles_modtime**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_modified_column()`
+   - **Description**: Met automatiquement à jour le champ `updated_at` lors de la modification d'un profil
+
+#### Table: `daily_logs`
+1. **update_daily_logs_modtime**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_modified_column()`
+   - **Description**: Met à jour automatiquement le champ de date de modification
+
+#### Table: `programs`
+1. **trg_deactivate_other_programs**
+   - **Type**: BEFORE INSERT OR UPDATE OF is_active
+   - **Niveau**: ROW
+   - **Fonction**: `deactivate_other_programs()`
+   - **Description**: Désactive automatiquement les autres programmes actifs d'un client lorsqu'un nouveau programme est marqué comme actif
+
+2. **update_programs_modtime**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_modified_column()`
+   - **Description**: Met à jour le champ de date de modification
+
+3. **update_programs_updated_at**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_updated_at_column()`
+   - **Description**: Met à jour le champ `updated_at`
+
+#### Table: `program_days`
+1. **update_program_days_modtime**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_modified_column()`
+   - **Description**: Met à jour le champ de date de modification
+
+#### Table: `nutrition_programs`
+1. **update_nutrition_programs_updated_at**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_nutrition_updated_at()`
+   - **Description**: Met à jour le champ `updated_at` pour les programmes nutritionnels
+
+#### Table: `nutrition_days`
+1. **update_nutrition_days_updated_at**
+   - **Type**: BEFORE UPDATE
+   - **Niveau**: ROW
+   - **Fonction**: `update_nutrition_updated_at()`
+   - **Description**: Met à jour le champ `updated_at` pour les jours de programme nutritionnel
+
+### Fonctions Personnalisées
+
+1. **`update_modified_column()`**
+   - **Retourne**: TRIGGER
+   - **Description**: Met à jour le champ `updated_at` avec la date et l'heure actuelles
+   - **Utilisation**: Déclenché avant une mise à jour sur les tables pour maintenir les horodatages
+
+2. **`update_updated_at_column()`**
+   - **Retourne**: TRIGGER
+   - **Description**: Similaire à `update_modified_column()`, met à jour le champ `updated_at`
+   - **Utilisation**: Utilisé spécifiquement pour la table `programs`
+
+3. **`update_nutrition_updated_at()`**
+   - **Retourne**: TRIGGER
+   - **Description**: Met à jour le champ `updated_at` pour les tables liées à la nutrition
+   - **Utilisation**: Utilisé pour les tables `nutrition_programs` et `nutrition_days`
+
+4. **`deactivate_other_programs()`**
+   - **Retourne**: TRIGGER
+   - **Description**: Désactive tous les autres programmes actifs d'un client lorsqu'un nouveau programme est marqué comme actif
+   - **Fonctionnement** :
+     - Vérifie si le programme est marqué comme actif (`is_active = true`)
+     - Si oui, désactive tous les autres programmes du même client
+     - Empêche ainsi d'avoir plusieurs programmes actifs pour un même client
+
    WITH CHECK (auth.uid() = user_id);
    ```
 

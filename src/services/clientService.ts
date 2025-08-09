@@ -10,33 +10,38 @@ export interface ClientProfile {
   phone?: string;
   starting_weight?: number;
   current_weight?: number;
-  sports_practiced?: string;
+  sports_practiced?: string | string[];
   objectives?: string;
-  injuries?: string;
+  injuries?: string | string[];
   created_at: string;
   updated_at: string;
 }
 
 export const fetchClients = async (): Promise<ClientProfile[]> => {
   try {
-    console.log('Début de la récupération des profils depuis Supabase...');
+    console.log('Début de la récupération des profils clients depuis Supabase...');
     
-    // Vérifier si l'utilisateur est authentifié
+    // Récupérer l'utilisateur connecté
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log('Utilisateur connecté:', user);
+    console.log('Utilisateur connecté:', user?.email);
     
     if (userError) {
       console.error('Erreur de récupération de l\'utilisateur:', userError);
+      throw userError;
     }
     
-    // Note: La vérification des politiques RLS a été supprimée car non essentielle pour la récupération des profils
-    // Les politiques RLS doivent être configurées directement dans l'interface Supabase
+    if (!user) {
+      console.error('Aucun utilisateur connecté');
+      return [];
+    }
     
-    // Récupérer tous les profils avec des logs détaillés
-    console.log('Récupération de tous les profils...');
+    // Récupérer uniquement les profils avec le rôle 'client' et exclure l'utilisateur connecté
+    console.log('Récupération des profils clients...');
     const { data: profiles, error, status, statusText, count } = await supabase
       .from('profiles')
       .select('*', { count: 'exact' })
+      .eq('role', 'client')  // Uniquement les clients
+      .neq('id', user.id)    // Exclure l'utilisateur connecté
       .order('created_at', { ascending: false });
     
     console.log('Détails de la réponse:', { 
@@ -235,10 +240,11 @@ export const updateClientProfile = async (clientId: string, updates: Partial<Cli
         }
       } 
       // Gestion des champs de type tableau
-      else if ((field === 'sports_practiced' || field === 'injuries') && value !== undefined) {
-        // Si c'est une chaîne, la convertir en tableau
-        if (typeof value === 'string') {
-          // Si la chaîne est vide, mettre un tableau vide
+      else if ((field === 'sports_practiced' || field === 'injuries')) {
+        if (value === null || value === undefined) {
+          updateData[field] = [];
+        } else if (typeof value === 'string') {
+          // Si c'est une chaîne vide, mettre un tableau vide
           if (value.trim() === '') {
             updateData[field] = [];
           } else {
@@ -248,15 +254,30 @@ export const updateClientProfile = async (clientId: string, updates: Partial<Cli
         } else if (Array.isArray(value)) {
           // Si c'est déjà un tableau, le garder tel quel
           updateData[field] = value;
-        } else if (value === '' || value === null) {
-          // Si c'est vide ou null, mettre un tableau vide
-          updateData[field] = [];
+        } else {
+          // Pour tout autre type, essayer de convertir en chaîne
+          try {
+            const stringValue = String(value);
+            updateData[field] = stringValue.trim() === '' ? [] : [stringValue.trim()];
+          } catch (e) {
+            console.warn(`[updateClientProfile] Impossible de convertir la valeur en tableau pour ${field}:`, value);
+            updateData[field] = [];
+          }
         }
       }
       // Gestion des champs numériques
       else if ((field === 'height' || field === 'starting_weight') && value !== undefined) {
         // Convertir en nombre ou null si vide
-        updateData[field] = value === '' || value === null ? null : Number(value);
+        if (value === '' || value === null) {
+          updateData[field] = null;
+        } else if (typeof value === 'string') {
+          const numValue = parseFloat(value);
+          updateData[field] = isNaN(numValue) ? null : numValue;
+        } else if (typeof value === 'number') {
+          updateData[field] = value;
+        } else {
+          updateData[field] = null;
+        }
       }
       // Pour les autres champs, ne pas inclure les valeurs undefined
       else if (value !== undefined) {

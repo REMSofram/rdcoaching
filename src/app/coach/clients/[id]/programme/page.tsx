@@ -126,6 +126,7 @@ export default function ClientProgramPage({
       
       const programData = {
         title: formData.title,
+        content: formData.days.map(day => day.content).join('\n\n---\n\n'), // Concaténer le contenu de tous les jours
         days: formData.days.map((day, index) => ({
           ...day,
           day_order: index

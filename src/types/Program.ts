@@ -62,6 +62,9 @@ export interface CreateProgramInput {
   /** Titre du programme d'entraînement */
   title: string;
   
+  /** Contenu détaillé du programme d'entraînement */
+  content?: string;
+  
   /** Liste des jours du programme */
   days: ProgramDayInput[];
 }
