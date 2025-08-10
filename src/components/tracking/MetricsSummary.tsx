@@ -83,7 +83,7 @@ export function MetricsSummary({ className = '', clientId }: MetricsSummaryProps
         );
         
         // Vérifier la série actuelle
-        let currentDate = new Date(today);
+        const currentDate = new Date(today);
         for (let i = 0; i < sortedLogs.length; i++) {
           const logDate = new Date(sortedLogs[i].log_date);
           logDate.setHours(0, 0, 0, 0);

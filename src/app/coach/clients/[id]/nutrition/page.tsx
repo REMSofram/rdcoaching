@@ -10,7 +10,8 @@ import {
   updateNutritionProgram,
   deleteNutritionProgram
 } from '@/services/nutritionService';
-import { NutritionProgram, NutritionDay, NutritionDayInput } from '@/types/Nutrition';
+import { NutritionProgram, NutritionDayInput } from '@/types/Nutrition';
+import { ProgramDay } from '@/types/Program';
 import { TabSystem } from '@/components/shared/TabSystem';
 import { Button } from '@/components/ui/button';
 import { Trash2, Save, Plus, Loader2 } from 'lucide-react';
@@ -36,6 +37,7 @@ export default function ClientNutritionPage({
   const { user } = useAuth();
   const router = useRouter();
   
+  // Dans Next.js 14, nous pouvons utiliser params directement dans les composants de page
   const clientId = params.id;
   
   const [program, setProgram] = useState<NutritionProgram | null>(null);
@@ -43,6 +45,8 @@ export default function ClientNutritionPage({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // L'ID du client est maintenant disponible directement via params.id
   const [formData, setFormData] = useState<NutritionFormData>({
     title: '',
     days: [createDefaultDay(0)]
@@ -300,7 +304,7 @@ export default function ClientNutritionPage({
             </div>
           ) : (
             <TabSystem 
-              days={formData.days as any} 
+              days={formData.days as unknown as ProgramDay[]} 
               onDaysChange={handleDaysChange}
               readOnly={false}
               className="bg-white p-4 rounded-lg border border-gray-200"

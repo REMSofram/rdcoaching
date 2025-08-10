@@ -16,9 +16,16 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Save, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface ExistingDay extends ProgramDayInput {
+  id?: string;
+  program_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface ProgramFormData {
   title: string;
-  days: ProgramDayInput[];
+  days: ExistingDay[];
 }
 
 // Fonction utilitaire pour créer un nouveau jour par défaut
@@ -36,8 +43,7 @@ export default function ClientProgramPage({
   const { user } = useAuth();
   const router = useRouter();
   
-  // In Next.js 14, we can use params directly in page components
-  // @ts-ignore - Ignorer l'avertissement Next.js pour l'accès direct à params.id
+  // Dans Next.js 14, nous pouvons utiliser params directement dans les composants de page
   const clientId = params.id;
   
   const [program, setProgram] = useState<Program | null>(null);
@@ -93,15 +99,31 @@ export default function ClientProgramPage({
   };
 
   // Gère les changements des jours via le TabSystem
-  const handleDaysChange = useCallback((days: ProgramDayInput[]) => {
-    setFormData(prev => ({
-      ...prev,
-      days: days.map((day, index) => ({
-        ...day,
-        day_order: index // S'assurer que l'ordre est toujours correct
-      }))
-    }));
-  }, []);
+  const handleDaysChange = useCallback((updatedDays: ProgramDayInput[]) => {
+    setFormData(prev => {
+      // Préserver les champs existants et mettre à jour l'ordre
+      const updatedDaysWithOrder = updatedDays.map((day, index) => {
+        // Trouver le jour existant pour préserver son ID s'il existe
+        const existingDay = prev.days.find(d => d.day_title === day.day_title);
+        const baseDay = existingDay || {} as ExistingDay;
+        
+        return {
+          ...baseDay,
+          ...day,
+          day_order: index,
+          id: baseDay.id || `temp-${index}`,
+          program_id: baseDay.program_id || program?.id || '',
+          created_at: baseDay.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as ExistingDay;
+      });
+
+      return {
+        ...prev,
+        days: updatedDaysWithOrder
+      };
+    });
+  }, [program?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +260,7 @@ export default function ClientProgramPage({
 
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Jours d'entraînement</h2>
+            <h2 className="text-lg font-medium text-gray-900">Jours d&apos;entraînement</h2>
             {!loading && (
               <Button 
                 type="button" 
@@ -258,7 +280,15 @@ export default function ClientProgramPage({
             </div>
           ) : (
             <TabSystem 
-              days={formData.days as any} 
+              days={formData.days.map((day, index) => ({
+                id: day.id || `temp-${index}`,
+                program_id: program?.id || '',
+                day_title: day.day_title,
+                content: day.content,
+                day_order: day.day_order ?? index,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              } as ProgramDay))} 
               onDaysChange={handleDaysChange}
               readOnly={false}
               className="bg-white p-4 rounded-lg border border-gray-200"

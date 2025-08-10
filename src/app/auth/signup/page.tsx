@@ -44,8 +44,9 @@ export default function SignupPage() {
       setTimeout(() => {
         router.push('/auth/verify-email');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de l\'inscription');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'inscription';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -211,9 +212,9 @@ export default function SignupPage() {
             </div>
             <div className="ml-3 text-sm">
               <label htmlFor="terms" className="text-gray-600">
-                J'accepte les{' '}
+                J&apos;accepte les{' '}
                 <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
-                  conditions d'utilisation
+                  conditions d&apos;utilisation
                 </a>{' '}
                 et la{' '}
                 <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
@@ -245,7 +246,7 @@ export default function SignupPage() {
           <p className="mt-2 text-xs text-gray-500">
             En vous inscrivant, vous acceptez nos{' '}
             <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
-              Conditions d'utilisation
+              Conditions d&apos;utilisation
             </a>{' '}
             et notre{' '}
             <a href="#" className="font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">

@@ -1,18 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import CoachLayout from '@/layout/CoachLayout';
-
-// Interface pour le type d'erreur retourné par updateClientProfile
-interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
-  stack?: string;
-}
 
 // Fonction de validation des données du formulaire
 const validateFormData = (formData: Partial<UserProfile>): string | null => {
@@ -49,21 +41,15 @@ const validateFormData = (formData: Partial<UserProfile>): string | null => {
   return null; // Aucune erreur
 };
 
-// Interface pour le type d'erreur retourné par updateClientProfile
-interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
-  stack?: string;
-}
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare } from 'lucide-react';
+import { Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getActiveProgram } from '@/services/programService';
 import { Program } from '@/types/Program';
 import { NutritionProgram } from '@/types/Nutrition';
+import { NutritionDay } from '@/types/Nutrition';
 import { getActiveNutritionProgram } from '@/services/nutritionService';
 import {
   Dialog,
@@ -72,46 +58,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { fetchClients, fetchClientLogs, updateClientProfile, type ClientProfile } from '@/services/clientService';
+import { fetchClients, fetchClientLogs, updateClientProfile, type ClientProfile, type ClientLogsResult } from '@/services/clientService';
+import type { ClientData, LogData, ProfileData, ApiError } from '@/types/client';
+
+type UserProfile = ClientProfile;
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
 import { LogHistory } from '@/components/tracking/LogHistory';
-
-// Types basés sur la structure de la base de données
-type UserProfile = {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  birth_date: string;
-  height: number;
-  phone: string;
-  starting_weight: number;
-  sports_practiced: string;
-  objectives: string;
-  injuries: string;
-  role: string;
-  is_onboarded: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-type DailyLog = {
-  id: string;
-  client_id: string;
-  weight?: number;
-  energy_level?: number;
-  sleep_quality?: number;
-  appetite?: string;
-  notes?: string;
-  created_at: string;
-  log_date: string;
-  training_type?: string;
-  plaisir_seance?: number;
-  completed?: boolean;
-  missed?: boolean;
-  status?: 'completed' | 'pending' | 'missed';
-  date?: Date;
-};
 
 type ClientProfilePageProps = {
   params: {
@@ -125,12 +77,11 @@ type ClientProfilePageProps = {
 export default function ClientProfilePage({ params, searchParams = {} }: ClientProfilePageProps) {
   const router = useRouter();
   
-  // Accès direct aux paramètres dans Next.js 14
   const clientId = params.id;
   const activeTab = searchParams.tab || 'profil';
 
   const [profile, setProfile] = useState<ClientProfile | null>(null);
-  const [logs, setLogs] = useState<any[]>([]); // Utilisation de any pour éviter les conflits de types temporairement
+  const [logs, setLogs] = useState<ClientLogsResult>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -142,9 +93,13 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
   const [nutritionLoading, setNutritionLoading] = useState(true);
 
 
-  const handleEditClick = (field: string, currentValue: string) => {
+  const handleEditClick = (field: string, currentValue: string | string[] | null | undefined) => {
     setEditingField(field);
-    setEditedValue(currentValue || '');
+    // Convertir les tableaux en chaînes avec des sauts de ligne pour l'affichage
+    const value = Array.isArray(currentValue) 
+      ? currentValue.join('\n') 
+      : currentValue || '';
+    setEditedValue(value);
   };
 
   const handleSave = async (field: string) => {
@@ -204,8 +159,14 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
         const activeNutritionProgram = await getActiveNutritionProgram(params.id);
         // S'assurer que les jours ont un day_order valide
         if (activeNutritionProgram?.nutrition_days) {
-          activeNutritionProgram.nutrition_days = activeNutritionProgram.nutrition_days.map((day: any, index: number) => ({
+          activeNutritionProgram.nutrition_days = activeNutritionProgram.nutrition_days.map((day: Partial<NutritionDay>, index: number) => ({
             ...day,
+            id: day.id || `temp-${index}`,
+            nutrition_program_id: day.nutrition_program_id || activeNutritionProgram.id,
+            day_title: day.day_title || `Jour ${index + 1}`,
+            content: day.content || '',
+            created_at: day.created_at || new Date().toISOString(),
+            updated_at: day.updated_at || new Date().toISOString(),
             day_order: day.day_order ?? index
           }));
         }
@@ -305,7 +266,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value, type } = e.target as HTMLInputElement;
       
-      let parsedValue: any = value;
+      let parsedValue: string | number | null = value;
       
       if (type === 'number') {
         parsedValue = value === '' ? null : parseFloat(value);
@@ -802,7 +763,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="mb-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Programme d'entraînement</h3>
+                <h3 className="text-lg font-medium text-gray-900">Programme d&apos;entraînement</h3>
                 <Link 
                   href={
                     {

@@ -159,7 +159,7 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
     return (
       <div className={`flex justify-center items-center p-8 ${className}`}>
         <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="ml-2">Chargement de l'historique...</span>
+        <span className="ml-2">Chargement de l&apos;historique...</span>
       </div>
     );
   }

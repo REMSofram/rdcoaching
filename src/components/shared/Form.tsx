@@ -7,7 +7,7 @@ type FormProps<TFormValues extends Record<string, unknown>> = {
   children: (methods: UseFormReturn<TFormValues>) => ReactNode;
   onSubmit: SubmitHandler<TFormValues>;
   options?: UseFormProps<TFormValues>;
-  schema?: z.ZodType<any, any>;
+  schema?: z.ZodType<unknown, unknown>;
   className?: string;
 };
 

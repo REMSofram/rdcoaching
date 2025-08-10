@@ -19,13 +19,25 @@ const createClient = () => {
 export const supabase = createClient();
 
 // Fonction utilitaire pour gérer les erreurs d'authentification
-export const handleAuthError = (error: any) => {
+interface AuthError extends Error {
+  status?: number;
+  message: string;
+  [key: string]: unknown;
+}
+
+export const handleAuthError = (error: unknown) => {
   console.error('Erreur d\'authentification:', error);
   
+  // Type guard to check if error is an object with a message property
+  const isErrorWithMessage = (e: unknown): e is { message: string } => {
+    return typeof e === 'object' && e !== null && 'message' in e;
+  };
+
   // Si le token est invalide ou expiré, on déconnecte l'utilisateur
-  if (error?.message?.includes('Invalid token') || 
-      error?.message?.includes('Token expired') ||
-      error?.status === 401) {
+  if ((isErrorWithMessage(error) && 
+      (error.message.includes('Invalid token') || 
+       error.message.includes('Token expired'))) ||
+      (error && typeof error === 'object' && 'status' in error && error.status === 401)) {
     supabase.auth.signOut()
       .then(() => {
         // Supprimer manuellement les cookies si nécessaire

@@ -3,8 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+
 import Loader from '@/components/ui/Loader';
 
 export default function Home() {

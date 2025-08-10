@@ -11,7 +11,7 @@ export default function CalendrierPage() {
           </div>
           <div className="ml-3">
             <p className="text-sm text-yellow-700">
-              Cette fonctionnalité n'est pas encore disponible. Elle sera bientôt mise en ligne.
+              Cette fonctionnalité n&apos;est pas encore disponible. Elle sera bientôt mise en ligne.
             </p>
           </div>
         </div>

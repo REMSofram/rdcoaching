@@ -67,7 +67,7 @@ export default function OnboardingPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -117,7 +117,7 @@ export default function OnboardingPage() {
 
       console.log("Redirection vers:", redirectPath);
       router.push(redirectPath);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erreur lors de la soumission du formulaire:", err);
 
       // Afficher un message d'erreur plus détaillé si disponible

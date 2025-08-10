@@ -1,0 +1,31 @@
+# Modifications pour corriger les erreurs TypeScript dans le composant Programme
+
+## Fichiers modifiés
+- `src/app/coach/clients/[id]/programme/page.tsx`
+
+## Modifications apportées
+
+### 1. Correction des types
+- Ajout de l'interface `ExistingDay` qui étend `ProgramDayInput` avec les champs optionnels :
+  - `id?: string`
+  - `program_id?: string`
+  - `created_at?: string`
+  - `updated_at?: string`
+
+- Mise à jour de l'interface `ProgramFormData` pour utiliser `ExistingDay[]` au lieu de `ProgramDayInput[]`
+
+### 2. Amélioration de la fonction `handleDaysChange`
+- Meilleure gestion des types avec vérification des champs existants
+- Préservation des IDs existants lors des mises à jour
+- Ajout des champs manquants (program_id, created_at, updated_at)
+- Correction des dépendances du useCallback pour inclure `program?.id`
+
+### 3. Correction du composant TabSystem
+- Remplacement du cast `as any` par une conversion explicite vers `ProgramDay`
+- Gestion des valeurs par défaut pour les champs obligatoires
+- Mise à jour de l'ordre des jours avec gestion des valeurs nulles
+
+## Prochaines étapes
+1. Tester la création et la modification des programmes
+2. Vérifier que tous les champs sont correctement sauvegardés
+3. S'assurer que les IDs sont correctement préservés lors des mises à jour

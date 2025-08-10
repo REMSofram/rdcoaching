@@ -1,0 +1,182 @@
+# Tasks - Correction des erreurs de build Vercel
+
+## ⚠️ FICHIERS CRITIQUES CORROMPUS (À TRAITER EN PREMIER)
+
+### Task 1: Régénérer les types Supabase
+**Fichiers:** `src/types/database.types.ts` et `src/types/supabase.ts`
+**Raison:** Ces fichiers sont détectés comme binaires corrompus par ESLint
+**Action:** 
+- Supprimer les fichiers existants
+- Régénérer avec `npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.types.ts`
+- Recréer `src/types/supabase.ts` avec les bonnes exports
+
+---
+
+## 🔴 ERREURS TYPESCRIPT (BLOQUANTES)
+
+### Task 2: Corriger les types `any` explicites
+**Raison:** TypeScript strict interdit l'usage de `any`, cause des erreurs de build
+
+#### `src/app/auth/login/page.tsx`
+- **Ligne 34:** Remplacer `(e: any)` par `(e: React.FormEvent<HTMLFormElement>)`
+
+#### `src/app/auth/signup/page.tsx` 
+- **Ligne 47:** Remplacer `(e: any)` par `(e: React.FormEvent<HTMLFormElement>)`
+
+#### `src/app/coach/clients/[id]/nutrition/page.tsx`
+- **Ligne 303:** Remplacer `(meal: any)` par `(meal: { id: string; name: string; [key: string]: unknown })`
+
+#### `src/app/coach/clients/[id]/page.tsx`
+- **Ligne 13:** Définir une interface `ClientData` au lieu de `any`
+- **Ligne 56:** Définir une interface `ProfileData` au lieu de `any` 
+- **Ligne 133:** Définir une interface `LogData` au lieu de `any`
+- **Ligne 207:** Remplacer `(log: any)` par `(log: LogData)`
+- **Ligne 308:** Remplacer `(data: any)` par `(data: ProfileData)`
+
+#### `src/app/coach/clients/[id]/programme/page.tsx`
+- **Ligne 261:** Remplacer `(exercise: any)` par `(exercise: { id: string; name: string; [key: string]: unknown })`
+
+#### `src/app/coach/clients/page.tsx`
+- **Ligne 17:** Remplacer `any[]` par `Client[]` (définir interface Client)
+
+#### `src/app/onboarding/page.tsx`
+- **Ligne 120:** Remplacer `(e: any)` par `(e: React.FormEvent<HTMLFormElement>)`
+
+#### `src/components/shared/Form.tsx`
+- **Ligne 10:** Remplacer `any, any` par des types génériques appropriés `<T, K>`
+
+#### `src/contexts/AuthContext.tsx`
+- **Lignes 12-15:** Créer des interfaces `User`, `Profile` au lieu de `any`
+- **Ligne 178:** Remplacer `(user: any)` par `(user: User | null)`
+- **Ligne 216:** Remplacer `(profile: any)` par `(profile: Profile | null)`
+
+#### `src/lib/auth.ts`
+- **Lignes 6-7:** Définir des interfaces au lieu de `any`
+- **Ligne 19:** Remplacer `any` par le bon type de retour
+- **Ligne 79:** Remplacer `(error: any)` par `(error: Error)`
+
+#### `src/lib/supabase.ts`
+- **Ligne 22:** Remplacer `any` par le type approprié depuis database.types.ts
+
+#### `src/services/clientService.ts`
+- **Ligne 100:** Remplacer `any` par une interface appropriée
+- **Ligne 203:** Remplacer `any` par le type de données attendu
+- **Ligne 223:** Remplacer `any` par le type d'erreur approprié
+
+---
+
+## 🟠 ERREURS REACT/JSX
+
+### Task 3: Corriger les apostrophes non échappées
+**Raison:** React exige l'échappement des apostrophes dans le JSX
+
+#### `src/app/auth/signup/page.tsx`
+- **Ligne 214:** `Don't` → `Don&apos;t`
+- **Ligne 216:** `can't` → `can&apos;t` 
+- **Ligne 248:** `We're` → `We&apos;re`
+
+#### `src/app/auth/verify-email/page.tsx`
+- **Ligne 29:** Échapper l'apostrophe
+
+#### `src/app/client/calendrier/page.tsx`
+- **Ligne 14:** Échapper l'apostrophe
+
+#### `src/app/client/nutrition/page.tsx`
+- **Ligne 100:** Échapper l'apostrophe
+
+#### `src/app/client/programme/page.tsx`
+- **Ligne 100:** Échapper l'apostrophe
+- **Ligne 132:** Échapper l'apostrophe
+
+#### `src/app/coach/clients/[id]/page.tsx`
+- **Ligne 805:** Échapper l'apostrophe
+
+#### `src/app/coach/clients/[id]/programme/page.tsx`
+- **Ligne 241:** Échapper l'apostrophe
+
+#### `src/components/shared/TabSystem.tsx`
+- **Ligne 172:** Échapper l'apostrophe
+
+#### `src/components/tracking/DailyLogForm.tsx`
+- **Ligne 276:** Échapper l'apostrophe
+- **Ligne 296:** Échapper l'apostrophe
+- **Ligne 303:** Échapper l'apostrophe
+
+#### `src/components/tracking/LogHistory.tsx`
+- **Ligne 162:** Échapper l'apostrophe
+
+---
+
+## 🟡 CORRECTIONS TYPESCRIPT MINEURES
+
+### Task 4: Corriger les autres erreurs TypeScript
+
+#### `src/app/coach/clients/[id]/programme/page.tsx`
+- **Ligne 40:** Remplacer `@ts-ignore` par `@ts-expect-error` avec commentaire explicatif
+
+#### `src/components/ui/textarea.tsx`
+- **Ligne 4:** Ajouter des propriétés à l'interface ou utiliser `type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>`
+
+#### `src/components/tracking/MetricsSummary.tsx`
+- **Ligne 86:** Remplacer `let currentDate` par `const currentDate`
+
+---
+
+## 🟢 NETTOYAGE DES VARIABLES INUTILISÉES
+
+### Task 5: Supprimer ou utiliser les variables inutilisées
+**Raison:** Variables déclarées mais jamais utilisées, pollution du code
+
+#### Variables à supprimer (si vraiment inutilisées):
+- `src/app/auth/login/page.tsx`: `router`, `searchParams` (lignes 15-16)
+- `src/app/coach/clients/[id]/nutrition/page.tsx`: `NutritionDay`, `handleRemoveDay` (lignes 13, 116)
+- `src/app/coach/clients/[id]/page.tsx`: `useParams`, `User`, `DailyLog`, etc.
+- `src/app/coach/clients/page.tsx`: `Link` (ligne 5)
+- `src/app/onboarding/page.tsx`: `useEffect`, `role`, `profileError` (lignes 3, 25, 44)
+- `src/app/page.tsx`: `Button`, `Link` (lignes 6-7)
+
+#### Variables dans les composants (vérifier si elles doivent être utilisées):
+- `src/components/auth/AuthInitializer.tsx`: toutes les variables (lignes 13-16)
+- `src/layout/ClientLayout.tsx`: imports et variables inutilisés
+- `src/layout/CoachLayout.tsx`: imports et variables inutilisés
+
+---
+
+## 🔧 CORRECTIONS REACT HOOKS
+
+### Task 6: Corriger les dépendances des useEffect
+**Raison:** React Hooks rules, peuvent causer des bugs ou des re-renders inutiles
+
+#### `src/app/coach/clients/[id]/page.tsx`
+- **Ligne 303:** Supprimer `profile` des dépendances (valeur externe)
+
+#### `src/components/shared/TabSystem.tsx`
+- **Ligne 121:** Ajouter `dayType` aux dépendances
+
+#### `src/components/tracking/DailyLogForm.tsx`
+- **Ligne 93:** Ajouter `loadLogForDate` aux dépendances
+- **Ligne 98:** Ajouter `loadLogForDate` et `today` aux dépendances
+
+#### `src/components/tracking/LogHistory.tsx`
+- **Ligne 110:** Ajouter `limit` et `timeRange` aux dépendances
+
+#### `src/components/tracking/MetricsSummary.tsx`
+- **Ligne 116:** Ajouter `targetClientId` aux dépendances
+
+---
+
+## 📝 ORDRE DE TRAITEMENT RECOMMANDÉ
+
+1. **Task 1** (Fichiers corrompus) - ⚠️ CRITIQUE
+2. **Task 2** (Types any) - 🔴 BLOQUANT  
+3. **Task 3** (Apostrophes) - 🟠 IMPORTANT
+4. **Task 4** (Corrections TS mineures) - 🟡 MOYEN
+5. **Task 5** (Variables inutilisées) - 🟢 NETTOYAGE
+6. **Task 6** (useEffect deps) - 🔧 OPTIMISATION
+
+## ✅ VÉRIFICATION FINALE
+Après chaque task, vérifier avec:
+```bash
+npm run build
+npm run lint
+```

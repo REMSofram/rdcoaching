@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
             </svg>
           </div>
           <h2 className="mt-6 text-2xl font-bold text-gray-900">
-            Vérification d'email
+            Vérification d&apos;email
           </h2>
           <p className="mt-4 text-gray-600">
             Un email de vérification a été envoyé à votre adresse email.

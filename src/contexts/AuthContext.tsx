@@ -9,10 +9,10 @@ type AuthContextType = {
   user: User | null;
   role: 'client' | 'coach' | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, userData: { firstName: string; lastName: string; role: 'client' | 'coach' }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (profileData: any) => Promise<{ error: any }>;
+  updateProfile: (profileData: { firstName?: string; lastName?: string; avatarUrl?: string }) => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,15 +167,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [router]);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Erreur lors de la connexion:', error);
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Erreur inattendue lors de la connexion:', error);
+      if (error instanceof Error) {
+        return { error };
+      }
+      return { error: new Error('Une erreur inconnue est survenue') };
+    }
   };
 
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = async (email: string, password: string, userData: { firstName: string; lastName: string; role: 'client' | 'coach' }): Promise<{ error: Error | null }> => {
     try {
       // Créer le compte utilisateur dans l'authentification
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -183,15 +197,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
         options: {
           data: {
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-            role: 'client',
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            role: userData.role,
           },
           emailRedirectTo: `${window.location.origin}/auth/verify-email?type=signup`,
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        console.error('Erreur lors de l\'inscription:', signUpError);
+        return { error: signUpError };
+      }
 
       // Le profil est maintenant créé automatiquement par le trigger côté serveur
       // Pas besoin de créer manuellement le profil ici
@@ -213,7 +230,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/auth/login');
   };
 
-  const updateProfile = async (profileData: any) => {
+  const updateProfile = async (profileData: { firstName?: string; lastName?: string; avatarUrl?: string }): Promise<{ error: Error | null }> => {
     try {
       console.log('Début de la mise à jour du profil avec les données:', profileData);
       
@@ -222,13 +239,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (userError) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
-        throw userError;
+        return { error: userError };
       }
       
       if (!currentUser) {
         const error = new Error('Utilisateur non connecté');
         console.error(error.message);
-        throw error;
+        return { error };
       }
 
       // Préparer les données de mise à jour
@@ -241,23 +258,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('Tentative d\'upsert avec les données:', updates);
       
       // Effectuer la mise à jour
-      const { data, error: upsertError } = await supabase
+      const { error: upsertError } = await supabase
         .from('profiles')
         .upsert(updates, { onConflict: 'id' });
 
-      console.log('Réponse de Supabase:', { data, error: upsertError });
+      console.log('Réponse de Supabase:', { error: upsertError });
       
       if (upsertError) {
         console.error('Erreur lors de l\'upsert du profil:', upsertError);
-        throw upsertError;
+        return { error: upsertError };
       }
       
       console.log('Profil mis à jour avec succès');
-      return { error: null, data };
+      return { error: null };
       
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil:', error);
-      return { error, data: null };
+      if (error instanceof Error) {
+        return { error };
+      }
+      return { error: new Error('Une erreur inconnue est survenue') };
     }
   };
 

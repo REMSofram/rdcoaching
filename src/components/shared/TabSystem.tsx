@@ -169,7 +169,7 @@ export const TabSystem: React.FC<TabSystemProps> = ({
   if (days.length === 0) {
     return (
       <div className={`flex flex-col items-center justify-center p-8 border rounded-lg bg-gray-50 ${className}`}>
-        <p className="text-gray-500 mb-4">Aucun jour d'entraînement défini</p>
+        <p className="text-gray-500 mb-4">Aucun jour d&apos;entraînement défini</p>
         {!readOnly && (
           <Button onClick={handleAddDay}>
             <Plus className="mr-2 h-4 w-4" />

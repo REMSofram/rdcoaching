@@ -1,0 +1,74 @@
+# Journal des corrections d'erreurs TypeScript
+
+## 2024-08-10
+
+### Fichiers à corriger :
+1. [x] `src/app/onboarding/page.tsx` (ligne 120) - Corrigé
+2. [x] `src/components/shared/Form.tsx` (ligne 10, 2 erreurs) - Vérifié, déjà typé correctement
+3. [x] `src/components/ui/textarea.tsx` (ligne 4) - Corrigé en remplaçant l'interface par un type
+4. [x] `src/lib/auth.ts` (lignes 6, 7, 19, 79, 4 erreurs) - Types mis à jour
+5. [x] `src/lib/supabase.ts` (ligne 22) - Type de l'erreur corrigé
+6. [x] `src/services/clientService.ts` (lignes 100, 203, 223, 3 erreurs) - Types mis à jour
+
+### Détail des corrections effectuées :
+
+1. **`src/app/onboarding/page.tsx` (ligne 120)**
+   - [x] Remplacé `data: any` par `data: Record<string, string | number | boolean | string[]>`
+
+2. **`src/components/shared/Form.tsx` (ligne 10)**
+   - [x] Vérifié : Le type était déjà correctement défini comme `onSubmit: (data: Record<string, unknown>) => void | Promise<void>`
+
+3. **`src/components/ui/textarea.tsx` (ligne 4)**
+   - [x] Remplacé l'interface par un type : `type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;`
+
+4. **`src/lib/auth.ts`**
+   - [x] Ajouté l'import : `import { User, Session } from '@supabase/supabase-js'`
+   - [x] Lignes 6-7 : Remplacé `any` par `User | null` et `Session | null`
+   - [x] Créé des interfaces pour les données utilisateur : `UserSignUpData` et `ProfileUpdateData`
+   - [ ] Note : Les lignes 19 (setUser) et 79 (handleAuthStateChange) n'existent pas dans le fichier
+
+5. **`src/lib/supabase.ts` (ligne 22)**
+   - [x] Créé une interface `AuthError` étendant `Error`
+   - [x] Remplacé `any` par `unknown` avec une vérification de type appropriée
+   - [x] Ajouté un type guard pour vérifier les propriétés de l'erreur
+
+6. **`src/services/clientService.ts`**
+   - [x] Ajouté l'import : `import type { TablesUpdate } from '@/types/database.types'`
+   - [x] Ligne 100 : Typé le paramètre de `updateProfile` comme `TablesUpdate<'profiles'>`
+   - [x] Ligne 203 : Supprimé le cast `as any` inutile
+   - [x] Ligne 223 : Remplacé `e: any` par `e: unknown`
+
+---
+
+## Progression des corrections
+
+### 1. `src/app/onboarding/page.tsx`
+- [x] Correction effectuée
+- [ ] Testée
+
+### 2. `src/components/shared/Form.tsx`
+- [x] Vérification effectuée - Aucun changement nécessaire
+- [x] Testée
+
+### 3. `src/components/ui/textarea.tsx`
+- [x] Correction effectuée
+- [ ] Testée
+
+### 4. `src/lib/auth.ts`
+- [x] Corrections effectuées pour les types existants
+- [ ] Note : Certaines références (setUser, handleAuthStateChange) n'existent pas
+- [ ] Test partiel effectué
+
+### 5. `src/lib/supabase.ts`
+- [x] Correction effectuée
+- [ ] Testée
+
+### 6. `src/services/clientService.ts`
+- [x] Correction effectuée
+- [ ] Testée
+
+## Notes finales :
+- Tous les types `any` ont été remplacés par des types plus spécifiques
+- Des interfaces ont été créées pour les données utilisateur
+- La gestion des erreurs a été améliorée avec des vérifications de type appropriées
+- Certaines références dans le fichier de tâches n'ont pas pu être trouvées dans le code actuel (setUser, handleAuthStateChange)

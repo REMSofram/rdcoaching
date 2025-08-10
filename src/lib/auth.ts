@@ -2,9 +2,11 @@ import { supabase } from './supabase';
 
 type UserRole = 'client' | 'coach';
 
+import { User, Session } from '@supabase/supabase-js';
+
 interface AuthResponse {
-  user: any;
-  session: any;
+  user: User | null;
+  session: Session | null;
   error: Error | null;
 }
 
@@ -16,7 +18,15 @@ export const signInWithEmail = async (email: string, password: string): Promise<
   return { user: data.user, session: data.session, error };
 };
 
-export const signUpWithEmail = async (email: string, password: string, userData: any): Promise<AuthResponse> => {
+interface UserSignUpData {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  birth_date?: string;
+  [key: string]: unknown;
+}
+
+export const signUpWithEmail = async (email: string, password: string, userData: UserSignUpData): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -76,7 +86,26 @@ export const isClient = async (): Promise<boolean> => {
   return role === 'client';
 };
 
-export const updateProfile = async (profileData: any): Promise<{ error: Error | null }> => {
+interface ProfileUpdateData {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  birth_date?: string;
+  date_of_birth?: string;
+  height?: number;
+  starting_weight?: number;
+  weight?: number;
+  sports_practiced?: string | string[];
+  sports?: string | string[];
+  objectives?: string;
+  goals?: string;
+  injuries?: string | string[];
+  medicalHistory?: string | string[];
+  role?: string;
+  [key: string]: unknown;
+}
+
+export const updateProfile = async (profileData: ProfileUpdateData): Promise<{ error: Error | null }> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import CoachLayout from '@/layout/CoachLayout';
 import { Users, ArrowRight, Loader2 } from 'lucide-react';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
@@ -14,7 +13,7 @@ type ClientLogsWithLastWeight = Array<{
   date: Date;
   status: 'completed' | 'pending' | 'missed';
   weight?: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | Date | undefined;
 }> & {
   lastWeight?: number;
 };

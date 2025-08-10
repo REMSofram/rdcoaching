@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +30,9 @@ export default function LoginPage() {
       // Ne pas rediriger ici, la redirection sera gérée par le contexte d'authentification
       // et le composant ProtectedRoute
       
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de la connexion');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion';
+      setError(errorMessage);
       setIsLoading(false);
     }
   };

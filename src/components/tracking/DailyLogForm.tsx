@@ -273,7 +273,7 @@ export default function DailyLogForm() {
           
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium text-gray-700">Niveau d'énergie</label>
+              <label className="text-sm font-medium text-gray-700">Niveau d&apos;énergie</label>
               <span className="text-xs text-gray-500">1 (Très bas) à 5 (Très élevé)</span>
             </div>
             <RatingButtons
@@ -293,14 +293,14 @@ export default function DailyLogForm() {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="training_done" className="ml-2 block text-sm text-gray-700">
-                Entraînement effectué aujourd'hui
+                Entraînement effectué aujourd&apos;hui
               </label>
             </div>
             
             {showTrainingFields && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type d'entraînement</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type d&apos;entraînement</label>
                   <Input
                     type="text"
                     name="training_type"

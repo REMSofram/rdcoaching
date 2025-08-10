@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { TablesUpdate } from '@/types/database.types';
 
 export interface ClientProfile {
   id: string;
@@ -90,18 +91,18 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-interface DailyLog {
+export interface DailyLog {
   id: string;
   client_id: string;
   log_date: string;
   date: Date;
   status: 'completed' | 'pending' | 'missed';
   weight?: number;
-  [key: string]: any; // Pour les autres propriétés optionnelles
+  [key: string]: unknown; // Pour les autres propriétés optionnelles
 }
 
 // Interface pour le résultat de fetchClientLogs qui inclut le dernier poids
-interface ClientLogsResult extends Array<DailyLog> {
+export interface ClientLogsResult extends Array<DailyLog> {
   lastWeight?: number;
 }
 
@@ -200,12 +201,12 @@ export const fetchClientLogs = async (clientId: string): Promise<ClientLogsResul
 type DetailedError = {
   message: string;
   code?: string;
-  details?: any;
+  details?: unknown;
   stack?: string;
   timestamp: string;
 };
 
-export const updateClientProfile = async (clientId: string, updates: Partial<ClientProfile>) => {
+export const updateClientProfile = async (clientId: string, updates: TablesUpdate<'profiles'>) => {
   try {
     console.log('[updateClientProfile] Début de la mise à jour du profil client', {
       clientId,
@@ -220,7 +221,7 @@ export const updateClientProfile = async (clientId: string, updates: Partial<Cli
     }
     
     // Préparation des données à mettre à jour avec gestion des valeurs nulles/vides
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     const fieldsToUpdate = [
       'first_name', 'last_name', 'email', 'phone', 'birth_date',
       'height', 'starting_weight', 'sports_practiced', 'objectives', 'injuries'
@@ -362,7 +363,7 @@ export const updateClientProfile = async (clientId: string, updates: Partial<Cli
     console.log('[updateClientProfile] Succès! Profil mis à jour:', data);
     return { data, error: null };
     
-  } catch (error) {
+  } catch (error: unknown) {
     // Créer un objet d'erreur détaillé
     const detailedError: DetailedError = {
       message: 'Erreur inconnue',

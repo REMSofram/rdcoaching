@@ -97,7 +97,7 @@ export default function NutritionPage() {
         <BackButton />
         <h1 className="text-2xl font-bold mb-6">Votre programme nutritionnel</h1>
         <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-          Aucun programme nutritionnel n'a été défini pour le moment. Votre coach vous en préparera un prochainement.
+          Aucun programme nutritionnel n&apos;a été défini pour le moment. Votre coach vous en préparera un prochainement.
         </div>
       </div>
     );

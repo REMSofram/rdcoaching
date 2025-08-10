@@ -97,7 +97,7 @@ export default function ProgrammePage() {
         <BackButton />
         <h1 className="text-2xl font-bold mb-6">Votre programme</h1>
         <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-          Aucun programme n'a été défini pour le moment. Votre coach vous en assignera un prochainement.
+          Aucun programme n&apos;a été défini pour le moment. Votre coach vous en assignera un prochainement.
         </div>
       </div>
     );
@@ -129,7 +129,7 @@ export default function ProgrammePage() {
         ) : (
           <div className="p-6">
             <div className="prose max-w-none">
-              <p className="text-gray-500">Aucun jour d'entraînement défini pour le moment.</p>
+              <p className="text-gray-500">Aucun jour d&apos;entraînement défini pour le moment.</p>
             </div>
           </div>
         )}
