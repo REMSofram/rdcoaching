@@ -24,6 +24,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const { user, updateProfile, role } = useAuth();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Vérifier si l'utilisateur est un coach ou déjà onboardé
   React.useEffect(() => {
@@ -54,6 +55,7 @@ export default function OnboardingPage() {
 
     checkOnboarding();
   }, [user, router]);
+
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -116,25 +118,39 @@ export default function OnboardingPage() {
           : "/client/suivi";
 
       console.log("Redirection vers:", redirectPath);
+      // Maintain loading state and show overlay while redirecting
+      setIsRedirecting(true);
       router.push(redirectPath);
     } catch (err: unknown) {
       console.error("Erreur lors de la soumission du formulaire:", err);
 
       // Afficher un message d'erreur plus détaillé si disponible
       const errorMessage =
-        err.message ||
+        (err as Error)?.message ||
         "Une erreur est survenue lors de la mise à jour de votre profil";
       setError(errorMessage);
 
       // Faire défiler vers le haut pour afficher le message d'erreur
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8">
+      {isRedirecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="w-full max-w-md mx-auto p-8 bg-white rounded-lg shadow-md text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+              <svg className="h-8 w-8 text-green-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Création du compte…</h2>
+            <p className="mt-2 text-gray-600">Nous finalisons la création de votre compte et préparons votre espace de suivi.</p>
+          </div>
+        </div>
+      )}
       <div className="absolute left-6 top-6">
         <Link 
           href="/auth/login" 

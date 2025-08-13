@@ -12,7 +12,8 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, userData: { firstName: string; lastName: string; role: 'client' | 'coach' }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (profileData: { firstName?: string; lastName?: string; avatarUrl?: string }) => Promise<{ error: Error | null }>;
+  // Allow flexible profile updates (onboarding sends snake_case fields matching DB schema)
+  updateProfile: (profileData: Record<string, any>) => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -221,7 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: new Error('Erreur lors de la création du compte') };
     } catch (error) {
       console.error('Error during sign up:', error);
-      return { error };
+      return { error: (error as Error) };
     }
   };
 
@@ -230,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/auth/login');
   };
 
-  const updateProfile = async (profileData: { firstName?: string; lastName?: string; avatarUrl?: string }): Promise<{ error: Error | null }> => {
+  const updateProfile = async (profileData: Record<string, any>): Promise<{ error: Error | null }> => {
     try {
       console.log('Début de la mise à jour du profil avec les données:', profileData);
       
