@@ -155,7 +155,7 @@ L'application distingue deux rôles principaux :
 ### 1. Client
 - Accès à l'espace personnel (`/client/*`)
 - Suivi des entraînements et de la progression
-- Tableau de bord personnalisé
+- Accueil « Suivi » comme page principale
 
 ### 2. Coach
 - Accès à l'interface d'administration (`/coach/*`)
@@ -170,56 +170,33 @@ L'application distingue deux rôles principaux :
 /auth/login
 /auth/signup
 /auth/verify-email
-/auth/forgot-password
-/auth/reset-password
-/error
-/not-found
 ```
 
 ### Routes Protégées - Client
 ```
-/client/dashboard           # Tableau de bord client
-/client/suivi              # Suivi des progrès et statistiques
-/client/calendrier         # Calendrier des séances et événements
-/client/nutrition          # Programme alimentaire et suivi nutritionnel
-/client/nutrition/[id]     # Détails d'un programme nutritionnel
-/client/profile            # Gestion du profil utilisateur
-/client/programme          # Programme d'entraînement actuel
-/client/programme/[id]     # Détails d'un programme spécifique
-/client/objectifs          # Gestion des objectifs
-/client/mesures            # Suivi des mesures corporelles
+/client/suivi          # Accueil suivi, page principale
+/client/calendrier     # Calendrier des séances et événements
+/client/nutrition      # Programme alimentaire et suivi nutritionnel
+/client/profile        # Gestion du profil utilisateur
+/client/programme      # Programme d'entraînement actuel
+/client/daily-log      # Journal quotidien (logs)
 ```
 
 ### Routes Protégées - Coach
 ```
-/coach/dashboard           # Tableau de bord coach
-/coach/clients             # Liste des clients
-/coach/clients/[id]        # Profil détaillé d'un client
-/coach/clients/[id]/suivi  # Suivi détaillé d'un client
-/coach/programs            # Gestion des programmes
-/coach/nutrition           # Gestion des programmes nutritionnels
-/coach/calendar            # Calendrier des séances
-/coach/profile             # Profil coach
-/coach/settings            # Paramètres du compte
+/coach/dashboard            # Tableau de bord coach
+/coach/clients              # Liste des clients
+/coach/clients/[id]         # Profil détaillé d'un client
+/coach/clients/[id]/programme  # Programme d'entraînement du client
+/coach/clients/[id]/nutrition  # Programme nutritionnel du client
+/coach/profile              # Profil coach
 ```
 
-### Routes d'Administration
-```
-/admin/dashboard           # Tableau de bord administrateur
-/admin/users               # Gestion des utilisateurs
-/admin/settings            # Paramètres de l'application
-/admin/logs                # Journaux d'activité
-```
+ 
 
 ### Autres Routes
 ```
 /onboarding               # Processus d'intégration des nouveaux utilisateurs
-/error                    # Page d'erreur générique
-/not-found                # Page 404
-/maintenance             # Page de maintenance
-/terms                   # Conditions d'utilisation
-/privacy                 # Politique de confidentialité
-/contact                 # Page de contact
 ```
 
 ## 🔒 Sécurité

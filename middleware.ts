@@ -91,7 +91,7 @@ export async function middleware(request: NextRequest) {
     if (profile?.is_onboarded && url.pathname === '/onboarding') {
       // Rediriger vers le tableau de bord approprié
       const isCoach = session.user.email === 'remy.denay6@gmail.com';
-      const dashboardUrl = new URL(isCoach ? '/coach/dashboard' : '/client/dashboard', request.url);
+      const dashboardUrl = new URL(isCoach ? '/coach/dashboard' : '/client/suivi', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
 
@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
     if (url.pathname.startsWith('/auth')) {
       // Rediriger vers le tableau de bord approprié
       const isCoach = session.user.email === 'remy.denay6@gmail.com';
-      const dashboardUrl = new URL(isCoach ? '/coach/dashboard' : '/client/dashboard', request.url);
+      const dashboardUrl = new URL(isCoach ? '/coach/dashboard' : '/client/suivi', request.url);
       return NextResponse.redirect(dashboardUrl);
     }
   }

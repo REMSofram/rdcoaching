@@ -48,7 +48,7 @@ export default function OnboardingPage() {
         .single();
 
       if (profile?.is_onboarded) {
-        router.push("/client/dashboard");
+        router.push("/client/suivi");
       }
     };
 

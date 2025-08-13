@@ -14,6 +14,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { useState } from "react";
+import CoachMobileNavigation from "@/components/mobile/coach/CoachMobileNavigation";
 
 interface NavItemProps {
   href: string;
@@ -153,10 +154,12 @@ export default function CoachLayout({
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto focus:outline-none bg-gray-50 p-6">
+        <main className="flex-1 overflow-y-auto focus:outline-none bg-gray-50 p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>
+      {/* Mobile bottom navigation */}
+      <CoachMobileNavigation />
     </div>
   );
 }

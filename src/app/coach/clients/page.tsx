@@ -6,6 +6,7 @@ import CoachLayout from '@/layout/CoachLayout';
 import { Users, ArrowRight, Loader2 } from 'lucide-react';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
 import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
+import ClientCard from '@/components/mobile/coach/ClientCard';
 
 // Type pour les données des clients
 // Type pour les logs avec lastWeight
@@ -58,7 +59,9 @@ export default function CoachClientsPage() {
         );
         
         console.log('Clients avec logs:', clientsWithLogs);
-        setClients(clientsWithLogs);
+        // Type-only adaptation: the logs shape returned by service differs slightly from the local type.
+        // This cast preserves runtime behavior without changing business logic.
+        setClients(clientsWithLogs as unknown as Client[]);
       } catch (error) {
         console.error('Error loading clients:', error);
       } finally {
@@ -78,16 +81,35 @@ export default function CoachClientsPage() {
   }
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="w-full md:w-auto text-center md:text-left">
           <h1 className="text-2xl font-bold text-gray-900">Mes clients</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Gérez vos clients et suivez leur progression
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Gérez vos clients et suivez leur progression</p>
         </div>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+      {/* Mobile: list as cards */}
+      <div className="md:hidden space-y-4 pb-6">
+        {clients.length === 0 ? (
+          <div className="text-center text-sm text-gray-500">Aucun client trouvé</div>
+        ) : (
+          clients.map((client) => (
+            <ClientCard
+              key={client.id}
+              id={client.id}
+              firstName={client.first_name}
+              lastName={client.last_name}
+              currentWeight={(client.logs?.[0]?.weight ?? client.current_weight) as number | null}
+              startingWeight={client.starting_weight as number | null}
+              objectives={client.objectives}
+              logs={(client.logs || []) as any}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop: existing table */}
+      <div className="hidden md:block bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

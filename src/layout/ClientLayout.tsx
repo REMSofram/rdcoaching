@@ -14,6 +14,8 @@ import {
   Activity,
 } from "lucide-react";
 import { useState } from "react";
+import MobileNavigation from "@/components/mobile/MobileNavigation";
+import FloatingActionButton from "@/components/mobile/FloatingActionButton";
 
 interface NavItemProps {
   href: string;
@@ -162,10 +164,14 @@ export default function ClientLayout({
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto focus:outline-none bg-gray-50 p-6">
+        <main className="flex-1 overflow-y-auto focus:outline-none bg-gray-50 p-6 md:pb-6 pb-28">
           {children}
         </main>
       </div>
+
+      {/* Mobile UI helpers */}
+      <MobileNavigation />
+      <FloatingActionButton />
     </div>
   );
 }

@@ -17,6 +17,7 @@ const formatDateString = (dateString: string) => {
   });
 };
 import { Loader2 } from 'lucide-react';
+import HistoryCard from '@/components/mobile/HistoryCard';
 
 type TimeRange = 'all' | 'month' | 'week';
 
@@ -49,6 +50,7 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const targetClientId = clientId || user?.id;
+  const [mobileVisible, setMobileVisible] = useState(limit);
 
   // Fonction pour filtrer les logs en fonction de la période sélectionnée
   const filterLogsByTimeRange = (logs: DailyLog[], range: TimeRange) => {
@@ -185,67 +187,112 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
   }
 
   return (
-    <div className={`overflow-hidden bg-white shadow rounded-lg ${className}`}>
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <h3 className="text-base font-medium text-gray-900">Historique des enregistrements</h3>
-        <div className="w-40">
-          <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-            <SelectTrigger className="h-8 text-sm">
-              <SelectValue placeholder="Période" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="month">30 derniers jours</SelectItem>
-              <SelectItem value="week">7 derniers jours</SelectItem>
-            </SelectContent>
-          </Select>
+    <>
+      {/* Mobile cards */}
+      <div className={`md:hidden ${className}`}>
+        <div className="flex items-center justify-between px-2 py-2">
+          <h3 className="text-base font-medium text-gray-900">Historique</h3>
+          <div className="w-36">
+            <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Période" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="month">30 jours</SelectItem>
+                <SelectItem value="week">7 jours</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {filteredLogs.slice(0, mobileVisible).map((log) => (
+            <HistoryCard
+              key={log.id}
+              date={formatDate(log.log_date)}
+              weight={log.weight}
+              sleepHours={log.sleep_hours}
+              sleepQuality={log.sleep_quality}
+              energyLevel={log.energy_level}
+              appetiteLabel={getAppetiteLabel(log.appetite)}
+            />
+          ))}
+        </div>
+        {mobileVisible < filteredLogs.length && (
+          <div className="flex justify-center mt-3">
+            <button
+              className="px-4 py-2 text-sm rounded bg-slate-900 text-white active:scale-95"
+              onClick={() => setMobileVisible((v) => v + limit)}
+            >
+              Voir plus
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className={`hidden md:block overflow-hidden bg-white shadow rounded-lg ${className}`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <h3 className="text-base font-medium text-gray-900">Historique des enregistrements</h3>
+          <div className="w-40">
+            <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Période" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="month">30 derniers jours</SelectItem>
+                <SelectItem value="week">7 derniers jours</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Poids (kg)
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sommeil
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Énergie
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Appétit
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {formatDate(log.log_date)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.weight ? `${log.weight} kg` : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.sleep_hours ? `${log.sleep_hours}h` : '-'}
+                    {log.sleep_quality && ` (${log.sleep_quality}/5)`}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {log.energy_level ? `${log.energy_level}/5` : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {getAppetiteLabel(log.appetite)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Poids (kg)
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sommeil
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Énergie
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Appétit
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredLogs.map((log) => (
-              <tr key={log.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatDate(log.log_date)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {log.weight ? `${log.weight} kg` : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {log.sleep_hours ? `${log.sleep_hours}h` : '-'}
-                  {log.sleep_quality && ` (${log.sleep_quality}/5)`}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {log.energy_level ? `${log.energy_level}/5` : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {getAppetiteLabel(log.appetite)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </>
   );
 }

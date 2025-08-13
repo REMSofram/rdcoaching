@@ -8,13 +8,15 @@ export default function SuiviPage() {
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
+        <div className="w-full sm:w-auto text-center sm:text-left">
           <h1 className="text-2xl font-bold text-gray-900">Suivi</h1>
           <p className="text-sm text-gray-500 mt-1">
             Consultez votre historique de suivi et vos progrès au fil du temps.
           </p>
         </div>
-        <DailyLogButton />
+        <div className="hidden md:block">
+          <DailyLogButton />
+        </div>
       </div>
       
       <div className="space-y-6">
