@@ -193,6 +193,11 @@ export default function DailyLogForm() {
     }
   };
 
+  // Annuler et revenir à la page de suivi
+  const handleCancel = () => {
+    router.push('/client/suivi');
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -337,7 +342,10 @@ export default function DailyLogForm() {
           />
         </div>
         
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-2">
+          <Button type="button" variant="ghost" onClick={handleCancel}>
+            Annuler
+          </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Enregistrement...' : 'Enregistrer mon journal'}
           </Button>

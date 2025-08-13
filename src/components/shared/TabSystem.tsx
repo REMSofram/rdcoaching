@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { ProgramDay, ProgramDayInput } from '@/types/Program';
+import { ProgramDayInput } from '@/types/Program';
 import { cn } from '@/lib/utils';
 
 // Styles pour masquer la barre de défilement
@@ -15,8 +15,18 @@ const scrollbarHideStyles = {
 
 type DayType = 'program' | 'nutrition';
 
+// Type minimal commun aux jours (programme et nutrition)
+interface BaseDay {
+  id?: string;
+  day_title: string;
+  content: string;
+  day_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface TabSystemProps {
-  days: ProgramDay[];
+  days: BaseDay[];
   onDaysChange?: (days: ProgramDayInput[]) => void;
   readOnly?: boolean;
   className?: string;
