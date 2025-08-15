@@ -80,6 +80,9 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname();
   // Retirer useState et accentColors
+  
+  // Masquer le bouton flottant lorsque l'utilisateur est en train de remplir un suivi
+  const hideFloatingActionButton = pathname === "/client/daily-log";
 
   const navItems = [
     {
@@ -171,7 +174,7 @@ export default function ClientLayout({
 
       {/* Mobile UI helpers */}
       <MobileNavigation />
-      <FloatingActionButton />
+      {!hideFloatingActionButton && <FloatingActionButton />}
     </div>
   );
 }

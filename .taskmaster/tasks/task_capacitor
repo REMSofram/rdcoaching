@@ -1,0 +1,183 @@
+# Guide Capacitor + PWA - Transformation d'une App Web Responsive
+
+## Contexte
+Transformer une application web responsive existante en application mobile hybride avec Capacitor et ajouter les fonctionnalités PWA.
+
+## Étapes d'implémentation
+
+### 1. Installation et configuration Capacitor
+
+```bash
+# Installation des dépendances
+npm install @capacitor/core @capacitor/cli
+npm install @capacitor/android @capacitor/ios
+
+# Initialisation Capacitor
+npx cap init [nom-app] [package-id]
+```
+
+**Configuration capacitor.config.ts :**
+- Définir le `webDir` (dossier de build)
+- Configurer l'URL de dev si nécessaire
+- Ajouter les permissions nécessaires
+
+### 2. Configuration PWA
+
+**Créer/modifier les fichiers :**
+- `manifest.json` dans le dossier public
+- Service Worker (`sw.js` ou via Workbox)
+- Icônes d'application (différentes tailles)
+
+**manifest.json requis :**
+```json
+{
+  "name": "Nom de l'App",
+  "short_name": "App",
+  "description": "Description",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "icons": [...]
+}
+```
+
+### 3. Génération des icônes et splash screens
+
+```bash
+# Installer l'outil de génération d'assets
+npm install @capacitor/assets --save-dev
+
+# Générer automatiquement
+npx capacitor-assets generate
+```
+
+**Préparer :**
+- `icon.png` (1024x1024)
+- `splash.png` (2732x2732)
+
+### 4. Configuration des plateformes
+
+```bash
+# Ajouter les plateformes
+npx cap add android
+npx cap add ios
+
+# Build et sync
+npm run build
+npx cap sync
+```
+
+### 5. Plugins Capacitor utiles
+
+**Installer selon les besoins :**
+```bash
+# Plugins courants
+npm install @capacitor/status-bar @capacitor/splash-screen
+npm install @capacitor/keyboard @capacitor/network
+npm install @capacitor/storage @capacitor/camera
+npm install @capacitor/geolocation @capacitor/push-notifications
+```
+
+### 6. Modifications du code source
+
+**Intégrer dans l'app :**
+- Import des plugins Capacitor
+- Gestion du status bar mobile
+- Adaptation des comportements (clavier, navigation)
+- Gestion des événements de device
+
+### 7. Service Worker pour PWA
+
+**Fonctionnalités à implémenter :**
+- Cache des assets statiques
+- Cache API avec stratégies (cache-first, network-first)
+- Fonctionnement offline
+- Notifications push
+
+### 8. Tests et débogage
+
+**Configuration pour les tests :**
+```bash
+# Serveur de dev avec live reload
+npx cap run android --livereload --external
+npx cap run ios --livereload --external
+```
+
+**Outils de debug :**
+- Chrome DevTools pour Android
+- Safari DevTools pour iOS
+- Capacitor DevApp pour tests rapides
+
+### 9. Build de production
+
+```bash
+# Build web
+npm run build
+
+# Sync avec les plateformes
+npx cap sync
+
+# Ouvrir dans les IDEs natifs
+npx cap open android  # Android Studio
+npx cap open ios      # Xcode
+```
+
+### 10. Optimisations
+
+**Performance :**
+- Lazy loading des composants
+- Optimisation des images
+- Minification des assets
+- Configuration du cache HTTP
+
+**UX Mobile :**
+- Gestes de navigation
+- Haptic feedback
+- Adaptation des tailles touch
+- Gestion de l'orientation
+
+## Structure finale du projet
+
+```
+projet/
+├── src/                    # Code source web
+├── public/
+│   ├── manifest.json
+│   ├── sw.js
+│   └── icons/
+├── android/               # Projet Android généré
+├── ios/                   # Projet iOS généré
+├── capacitor.config.ts
+└── package.json
+```
+
+## Commandes de développement
+
+```bash
+# Développement web normal
+npm run dev
+
+# Développement mobile avec live reload
+npx cap run android --livereload
+npx cap run ios --livereload
+
+# Build et déploiement
+npm run build && npx cap sync
+npx cap open android
+npx cap open ios
+```
+
+## Points d'attention
+
+1. **Permissions** : Déclarer toutes les permissions nécessaires
+2. **HTTPS** : Requis pour PWA et certaines fonctionnalités
+3. **Icons** : Générer toutes les tailles requises
+4. **Testing** : Tester sur vrais devices, pas seulement émulateurs
+5. **Store** : Préparer les métadonnées pour publication
+
+## Ressources
+
+- Documentation Capacitor : https://capacitorjs.com/docs
+- PWA Guidelines : https://web.dev/progressive-web-apps/
+- Capacitor Plugins : https://capacitorjs.com/docs/plugins
