@@ -11,8 +11,6 @@ import { ArrowLeft } from "lucide-react";
 
 export default function OnboardingPage() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     phone: "",
     birthDate: "",
     height: "",
@@ -75,15 +73,8 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      // Validation des champs obligatoires
-      if (!formData.firstName || !formData.lastName) {
-        throw new Error("Le prénom et le nom sont obligatoires");
-      }
-
       // Préparer les données pour la mise à jour du profil
       const profileUpdate = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
         phone: formData.phone,
         birth_date: formData.birthDate, // Utiliser le bon nom de champ selon le schéma
         height: formData.height ? parseFloat(formData.height) : null,
@@ -196,25 +187,6 @@ export default function OnboardingPage() {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <Input
-                label="Prénom"
-                name="firstName"
-                type="text"
-                required
-                value={formData.firstName}
-                onChange={handleChange}
-              />
-              <Input
-                label="Nom"
-                name="lastName"
-                type="text"
-                required
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-            </div>
-
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <Input
                 label="Téléphone"

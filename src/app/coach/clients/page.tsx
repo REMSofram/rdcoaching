@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CoachLayout from '@/layout/CoachLayout';
-import { Users, ArrowRight, Loader2 } from 'lucide-react';
+import { Users, ArrowRight, Loader2, UserPlus, X } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
 import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
 import ClientCard from '@/components/mobile/coach/ClientCard';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // Type pour les données des clients
 // Type pour les logs avec lastWeight
@@ -26,7 +28,12 @@ type Client = ClientProfile & {
 export default function CoachClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const router = useRouter();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const loadClients = async () => {
@@ -72,6 +79,62 @@ export default function CoachClientsPage() {
     loadClients();
   }, []);
 
+  const reloadClients = async () => {
+    try {
+      setIsLoading(true);
+      const clientsData = await fetchClients();
+      const clientsWithLogs = await Promise.all(
+        clientsData.map(async (client) => {
+          const logs = await fetchClientLogs(client.id);
+          return {
+            ...client,
+            current_weight: logs.lastWeight ?? client.current_weight,
+            logs: logs || []
+          } as Client;
+        })
+      );
+      setClients(clientsWithLogs as unknown as Client[]);
+    } catch (e) {
+      console.error('Erreur lors du rafraîchissement des clients:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteError(null);
+    if (!inviteEmail) return;
+    setIsInviting(true);
+    try {
+      const res = await fetch('/api/invitations/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim() })
+      });
+      // Read as text then try to parse JSON to avoid "Unexpected end of JSON" if body is empty
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { error: text || 'Réponse inattendue du serveur' };
+      }
+      if (!res.ok) {
+        throw new Error(data?.error || `Échec de l'invitation (HTTP ${res.status})`);
+      }
+      // Succès: fermer le modal, reset, recharger la liste
+      setIsInviteOpen(false);
+      setInviteEmail('');
+      await reloadClients();
+      showNotification('Invitation envoyée avec succès !');
+    } catch (err: any) {
+      setInviteError(err?.message || 'Une erreur est survenue');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -86,10 +149,82 @@ export default function CoachClientsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Mes clients</h1>
           <p className="mt-1 text-sm text-gray-500">Gérez vos clients et suivez leur progression</p>
         </div>
+        <div className="hidden md:block">
+          <Dialog.Root open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+            <Dialog.Trigger asChild>
+              <button className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90 transition cursor-pointer">
+                <UserPlus className="h-4 w-4" />
+                Ajouter un client
+              </button>
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+              <Dialog.Content className="fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <Dialog.Title className="text-lg font-semibold">Inviter un client</Dialog.Title>
+                  <Dialog.Close asChild>
+                    <button className="rounded p-1 hover:bg-gray-100" aria-label="Fermer">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </Dialog.Close>
+                </div>
+                <Dialog.Description className="text-sm text-gray-600 mb-3">
+                  Entrez l'adresse email du client. Il recevra un Magic Link pour valider son email
+                  et accéder à son espace.
+                </Dialog.Description>
+                <form onSubmit={handleInvite} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email du client</label>
+                    <input
+                      type="email"
+                      required
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="client@example.com"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  {inviteError && (
+                    <p className="text-sm text-red-600">{inviteError}</p>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Dialog.Close asChild>
+                      <button type="button" className="rounded-md border px-4 py-2 hover:bg-gray-50">Annuler</button>
+                    </Dialog.Close>
+                    <button
+                      type="submit"
+                      disabled={isInviting}
+                      className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      {isInviting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        'Envoyer l\'invitation'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        </div>
       </div>
 
       {/* Mobile: list as cards */}
       <div className="md:hidden space-y-4 pb-6">
+        {/* Mobile action button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white hover:bg-primary/90"
+          >
+            <UserPlus className="h-4 w-4" />
+            Ajouter
+          </button>
+        </div>
         {clients.length === 0 ? (
           <div className="text-center text-sm text-gray-500">Aucun client trouvé</div>
         ) : (
@@ -201,7 +336,9 @@ export default function CoachClientsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {client.objectives || 'Non spécifié'}
+                      <div className="max-w-xs truncate">
+                        {client.objectives || 'Non spécifié'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-start space-x-1">

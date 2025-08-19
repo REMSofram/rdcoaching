@@ -91,19 +91,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Rediriger après la connexion initiale uniquement
           if (event === 'SIGNED_IN') {
             console.log('[AuthContext] Connexion détectée, vérification de l\'email');
-            // Ne rediriger que si on n'est pas déjà sur une page protégée
             const currentPath = window.location.pathname;
+            
+            // Ne rien faire de spécial si on est sur la page de création de compte
+            if (currentPath === '/auth/create-account') {
+              console.log('[AuthContext] Sur /auth/create-account, pas de traitement spécial');
+              return;
+            }
+            
+            // Vérifier si on est sur une page protégée
             const isOnProtectedRoute = currentPath.startsWith('/coach/') || 
                                      currentPath.startsWith('/client/') || 
                                      currentPath === '/onboarding';
             
+            // Si on n'est pas sur une page protégée et qu'on n'est pas sur la page de création de compte
             if (!isOnProtectedRoute) {
               // Vérifier si l'email est confirmé
               if (session.user.email_confirmed_at) {
                 const redirectPath = isCoach ? '/coach/dashboard' : '/client/suivi';
                 console.log(`[AuthContext] Redirection vers: ${redirectPath}`);
                 router.push(redirectPath);
-              } else {
+              } else if (currentPath !== '/auth/verify-email') {
                 console.log('[AuthContext] Email non confirmé, redirection vers la vérification');
                 router.push('/auth/verify-email');
               }
@@ -112,12 +120,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         } else {
+          const currentPath = window.location.pathname;
+          
+          // Ne pas déconnecter ni rediriger si on est sur la page de création de compte
+          if (currentPath === '/auth/create-account') {
+            console.log('[AuthContext] Sur /auth/create-account, on ne fait rien sur la déconnexion');
+            return;
+          }
+          
           setUser(null);
           setRole(null);
-          const currentPath = window.location.pathname;
+          
           console.log(`[AuthContext] Déconnexion détectée, chemin actuel: ${currentPath}`);
+          
           // Rediriger vers la page de connexion si l'utilisateur est déconnecté
-          if (!['/auth/login', '/auth/signup', '/auth/verify-email', '/'].includes(currentPath)) {
+          if (!['/auth/login', '/auth/signup', '/auth/verify-email', '/', '/auth/create-account'].includes(currentPath)) {
             console.log(`[AuthContext] Redirection vers la page de connexion depuis: ${currentPath}`);
             router.push('/auth/login');
           } else {

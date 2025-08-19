@@ -29,11 +29,14 @@ interface DailyLog {
   sleep_hours?: number;
   energy_level?: number;
   appetite_level?: number;
-  appetite?: 'faible' | 'normal' | 'élevé';
+  appetite?: 'faible' | 'moyen' | 'élevé';
   notes?: string;
   client_id: string;
   created_at: string;
   updated_at: string;
+  training_done?: boolean;
+  training_type?: string;
+  plaisir_seance?: number; // 1-5
 }
 
 interface LogHistoryProps {
@@ -51,6 +54,8 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
   const [error, setError] = useState<string | null>(null);
   const targetClientId = clientId || user?.id;
   const [mobileVisible, setMobileVisible] = useState(limit);
+  const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fonction pour filtrer les logs en fonction de la période sélectionnée
   const filterLogsByTimeRange = (logs: DailyLog[], range: TimeRange) => {
@@ -157,6 +162,16 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
     setTimeRange(value as TimeRange);
   };
 
+  const openLogDialog = (log: DailyLog) => {
+    setSelectedLog(log);
+    setIsDialogOpen(true);
+  };
+
+  const closeLogDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedLog(null);
+  };
+
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center p-8 ${className}`}>
@@ -207,15 +222,20 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
         </div>
         <div className="space-y-3">
           {filteredLogs.slice(0, mobileVisible).map((log) => (
-            <HistoryCard
+            <div
               key={log.id}
-              date={formatDate(log.log_date)}
-              weight={log.weight}
-              sleepHours={log.sleep_hours}
-              sleepQuality={log.sleep_quality}
-              energyLevel={log.energy_level}
-              appetiteLabel={getAppetiteLabel(log.appetite)}
-            />
+              className="cursor-pointer active:scale-[0.99]"
+              onClick={() => openLogDialog(log)}
+            >
+              <HistoryCard
+                date={formatDate(log.log_date)}
+                weight={log.weight}
+                sleepHours={log.sleep_hours}
+                sleepQuality={log.sleep_quality}
+                energyLevel={log.energy_level}
+                appetiteLabel={getAppetiteLabel(log.appetite)}
+              />
+            </div>
           ))}
         </div>
         {mobileVisible < filteredLogs.length && (
@@ -248,51 +268,108 @@ export function LogHistory({ className = '', limit = 10, clientId }: LogHistoryP
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
                   Date
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                   Poids (kg)
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                   Sommeil
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                   Énergie
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                   Appétit
+                </th>
+                <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                  Remarques
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr
+                  key={log.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => openLogDialog(log)}
+                >
+                  <td className="px-3 py-4 text-sm font-medium text-gray-900 max-w-[176px] truncate" title={formatDate(log.log_date)}>
                     {formatDate(log.log_date)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 w-24">
                     {log.weight ? `${log.weight} kg` : '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 w-32">
                     {log.sleep_hours ? `${log.sleep_hours}h` : '-'}
                     {log.sleep_quality && ` (${log.sleep_quality}/5)`}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 w-24">
                     {log.energy_level ? `${log.energy_level}/5` : '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 w-28">
                     {getAppetiteLabel(log.appetite)}
+                  </td>
+                  <td className="px-3 py-4 text-sm text-gray-500 max-w-[192px] truncate" title={log.notes || ''}>
+                    {log.notes ? log.notes : '-'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* Dialog moved below to be available for mobile and desktop */}
       </div>
+      {/* Dialog for full log details (rendered globally for responsiveness) */}
+      {isDialogOpen && selectedLog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="absolute inset-0 bg-black/40" onClick={closeLogDialog} />
+          <div className="relative z-10 w-full max-w-lg mx-4 rounded-lg bg-white shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-3 border-b">
+              <h4 className="text-base font-semibold text-gray-900">Détail du log</h4>
+              <button
+                className="text-gray-500 hover:text-gray-700 px-2 py-1"
+                onClick={closeLogDialog}
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5 space-y-3 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium text-gray-900">{formatDate(selectedLog.log_date)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Poids</span><span>{selectedLog.weight ? `${selectedLog.weight} kg` : '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Sommeil</span><span>{selectedLog.sleep_hours ? `${selectedLog.sleep_hours}h` : '-'}{selectedLog.sleep_quality && ` (${selectedLog.sleep_quality}/5)`}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Énergie</span><span>{selectedLog.energy_level ? `${selectedLog.energy_level}/5` : '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Appétit</span><span>{getAppetiteLabel(selectedLog.appetite)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Type de séance</span><span>{selectedLog.training_type || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Plaisir séance</span><span>{selectedLog.plaisir_seance ? `${selectedLog.plaisir_seance}/5` : '-'}</span></div>
+              <div>
+                <div className="text-gray-500 mb-1">Remarques</div>
+                <div className="whitespace-pre-wrap break-words text-gray-800 bg-gray-50 border border-gray-200 rounded p-3">
+                  {selectedLog.notes || '—'}
+                </div>
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t flex justify-end">
+              <button
+                className="inline-flex items-center rounded bg-slate-900 text-white px-4 py-2 text-sm active:scale-95"
+                onClick={closeLogDialog}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

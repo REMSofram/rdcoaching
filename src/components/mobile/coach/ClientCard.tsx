@@ -51,11 +51,11 @@ export default function ClientCard({
         <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
           <Users className="h-5 w-5 text-slate-600" />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-[18px] font-semibold text-gray-900">
             {(firstName || lastName) ? `${firstName ?? ""} ${lastName ?? ""}`.trim() : "Client"}
           </div>
-          <div className="text-xs text-gray-500">Objectif: {objectives || "Non spécifié"}</div>
+          <div className="text-xs text-gray-500 truncate">Objectif: {objectives || "Non spécifié"}</div>
         </div>
       </div>
 

@@ -2,6 +2,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware for create-account page to allow invitation flow
+  if (request.nextUrl.pathname === '/auth/create-account') {
+    console.log('[Middleware] Skipping auth check for /auth/create-account');
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -76,8 +82,8 @@ export async function middleware(request: NextRequest) {
       .single();
 
     // Si le profil n'existe pas ou si l'onboarding n'est pas complété
-    // et que l'utilisateur n'est pas déjà sur la page d'onboarding
-    if ((!profile || !profile.is_onboarded) && url.pathname !== '/onboarding') {
+    // et que l'utilisateur n'est pas déjà sur la page d'onboarding ou de création de compte
+    if ((!profile || !profile.is_onboarded) && url.pathname !== '/onboarding' && url.pathname !== '/auth/create-account' && !url.pathname.startsWith('/_next/')) {
       // Rediriger vers la page d'onboarding
       const onboardingUrl = new URL('/onboarding', request.url);
       // Si l'utilisateur était sur une autre page, on la sauvegarde pour rediriger après l'onboarding
@@ -96,8 +102,20 @@ export async function middleware(request: NextRequest) {
     }
 
     // Si l'utilisateur est connecté et essaie d'accéder à une page d'authentification
-    if (url.pathname.startsWith('/auth')) {
-      // Rediriger vers le tableau de bord approprié
+    if (url.pathname.startsWith('/auth') && url.pathname !== '/auth/create-account') {
+      // Vérifier si l'utilisateur a complété l'onboarding
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_onboarded')
+        .eq('id', session.user.id)
+        .single();
+      
+      // Si l'onboarding n'est pas complété, rediriger vers l'onboarding
+      if (!profile?.is_onboarded) {
+        return NextResponse.redirect(new URL('/onboarding', request.url));
+      }
+      
+      // Sinon, rediriger vers le tableau de bord approprié
       const isCoach = session.user.email === 'remy.denay6@gmail.com';
       const dashboardUrl = new URL(isCoach ? '/coach/dashboard' : '/client/suivi', request.url);
       return NextResponse.redirect(dashboardUrl);
@@ -114,8 +132,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - api/auth/callback (auth callbacks)
+     * - api/ (all API routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
   ],
 };

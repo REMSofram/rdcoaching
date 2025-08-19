@@ -14,8 +14,9 @@ import { NutritionProgram, NutritionDayInput } from '@/types/Nutrition';
 import { ProgramDay } from '@/types/Program';
 import { TabSystem } from '@/components/shared/TabSystem';
 import { Button } from '@/components/ui/button';
-import { Trash2, Save, Plus, Loader2 } from 'lucide-react';
+import { Trash2, Save, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 interface NutritionFormData {
   title: string;
@@ -23,11 +24,26 @@ interface NutritionFormData {
 }
 
 // Fonction utilitaire pour créer un nouveau jour par défaut
-const createDefaultDay = (index: number): NutritionDayInput => ({
-  day_title: `Jour ${index + 1} - Nouvelle journée`,
-  content: '',
-  day_order: index
-});
+const createDefaultDay = (index: number): NutritionDayInput => {
+  // Template par défaut pour le contenu du jour
+  const defaultContent = index === 0 
+    ? `## Petit-déjeuner
+- 
+## Déjeuner
+- 
+## Collation
+- 
+## Dîner
+- 
+`
+    : '';
+
+  return {
+    day_title: `Jour ${index + 1} - Nouvelle journée`,
+    content: defaultContent,
+    day_order: index
+  };
+};
 
 export default function ClientNutritionPage({
   params,
@@ -44,6 +60,7 @@ export default function ClientNutritionPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // L'ID du client est maintenant disponible directement via params.id
@@ -206,28 +223,40 @@ export default function ClientNutritionPage({
     }
   };
 
+  // Gérer le clic sur le bouton de suppression
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
   // Supprimer le programme
   const handleDelete = async () => {
     if (!program) return;
     
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce programme nutritionnel ? Cette action est irréversible.')) {
-      return;
-    }
-    
     try {
       setDeleting(true);
-      await deleteNutritionProgram(program.id);
-      setProgram(null);
-      setFormData({
-        title: 'Programme Nutritionnel',
-        days: [createDefaultDay(0)]
-      });
+      const result = await deleteNutritionProgram(program.id);
       
-      toast.success('Programme nutritionnel supprimé avec succès !');
+      if (result.success) {
+        setShowDeleteDialog(false);
+        toast.success(result.message || 'Programme nutritionnel supprimé avec succès !');
+        
+        // Rediriger vers la page du client après un court délai
+        setTimeout(() => {
+          router.push(`/coach/clients/${clientId}`);
+        }, 1000);
+      } else {
+        // Afficher l'erreur retournée par la fonction
+        const errorMessage = result.error || 'Erreur inconnue lors de la suppression';
+        console.error('Erreur lors de la suppression:', errorMessage);
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
       
     } catch (err) {
-      console.error('Error deleting nutrition program:', err);
-      setError('Erreur lors de la suppression du programme nutritionnel.');
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur inattendue lors de la suppression:', err);
+      setError('Une erreur est survenue lors de la suppression du programme.');
+      toast.error(errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -319,12 +348,12 @@ export default function ClientNutritionPage({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={deleting}
                 className="flex items-center"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                {deleting ? 'Suppression...' : 'Supprimer le programme'}
+                Supprimer le programme
               </Button>
             )}
           </div>
@@ -357,6 +386,49 @@ export default function ClientNutritionPage({
           </div>
         </div>
       </form>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-red-100 p-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <DialogTitle>Supprimer le programme nutritionnel</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Êtes-vous sûr de vouloir supprimer ce programme nutritionnel ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleting}
+            >
+              Annuler
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDelete}
+              disabled={deleting}
+              className="gap-2"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                'Supprimer définitivement'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

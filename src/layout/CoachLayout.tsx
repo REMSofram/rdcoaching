@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import logoBanner from "../../resources/logo_bannière.png";
 import {
   LogOut,
   User,
@@ -61,10 +63,10 @@ type AccentColor = (typeof accentColors)[number];
 const NavItem: React.FC<NavItemProps> = ({ href, icon, label, isActive }) => (
   <Link
     href={href}
-    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+    className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors mx-2 ${
       isActive
-        ? "bg-slate-500 text-white"
-        : "text-slate-900 hover:bg-slate-200 hover:text-slate-900"
+        ? "bg-primary text-white"
+        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
     }`}
   >
     <span className="mr-3">{icon}</span>
@@ -108,9 +110,14 @@ export default function CoachLayout({
         <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
           <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4 mb-8">
-              <h1 className="text-lg font-bold bg-slate-200 text-slate-800 rounded px-3 py-1 tracking-wide shadow-inner border border-slate-300">
-                RD Coaching
-              </h1>
+              <div className="flex items-center justify-center w-full">
+                <Image
+                  src={logoBanner}
+                  alt="RD Coaching"
+                  className="h-10 w-auto -translate-x-[10px] transform"
+                  priority
+                />
+              </div>
             </div>
             {/* Retirer le sélecteur de couleur */}
             <nav className="flex-1 px-2 space-y-1">
@@ -136,14 +143,14 @@ export default function CoachLayout({
               ))}
             </div>
           </div>
-          <div className="p-2 border-t border-gray-200">
+          <div className="border-t border-gray-200 px-2 py-1">
             <button
               onClick={async () => {
                 const { signOut } = await import("@/lib/auth");
                 await signOut();
                 window.location.href = "/";
               }}
-              className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
             >
               <LogOut className="mr-3 h-5 w-5" />
               Déconnexion

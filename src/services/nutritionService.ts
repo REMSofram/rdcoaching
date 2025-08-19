@@ -138,17 +138,37 @@ export const updateNutritionProgram = async (
 /**
  * Supprime un programme nutritionnel et tous ses jours associés
  * @param programId ID du programme à supprimer
+ * @returns Un objet contenant le statut de la suppression et un message
  */
-export const deleteNutritionProgram = async (programId: string): Promise<void> => {
-  // La suppression en cascade est gérée par la base de données
-  const { error } = await supabase
-    .from('nutrition_programs')
-    .delete()
-    .eq('id', programId);
+export const deleteNutritionProgram = async (programId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+  try {
+    const { data, error } = await supabase.rpc('delete_nutrition_program_with_days', {
+      p_program_id: programId
+    });
 
-  if (error) {
-    console.error('Error deleting nutrition program:', error);
-    throw error;
+    if (error) {
+      console.error('Erreur lors de la suppression du programme nutritionnel:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Erreur lors de la suppression du programme' 
+      };
+    }
+
+    // Si data est déjà un objet avec une propriété success
+    if (data && typeof data === 'object' && 'success' in data) {
+      return data as { success: boolean; message?: string; error?: string };
+    }
+
+    return { 
+      success: true, 
+      message: 'Programme nutritionnel supprimé avec succès' 
+    };
+  } catch (err) {
+    console.error('Erreur inattendue lors de la suppression:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : 'Une erreur inattendue est survenue' 
+    };
   }
 };
 

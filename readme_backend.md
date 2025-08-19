@@ -41,14 +41,27 @@ Le fichier `middleware.ts` gère toutes les requêtes entrantes et applique une 
 
 ## 🔄 Flux d'Authentification
 
-1. **Connexion** (`/auth/login`)
+1. **Création de Compte** (`/auth/create-account`)
+   - Formulaire de création de compte avec email, mot de passe, prénom et nom
+   - Vérification de la validité du mot de passe (6 caractères minimum)
+   - Mise à jour du profil utilisateur avec les informations fournies
+   - Redirection automatique vers la page d'onboarding après création réussie
+   - Le champ `is_onboarded` est défini à `false` jusqu'à la complétion de l'onboarding
+
+2. **Connexion** (`/auth/login`)
    - Formulaire de connexion avec email/mot de passe
    - Redirection vers la vérification d'email si nécessaire
    - Gestion des erreurs de connexion
 
-2. **Vérification d'Email** (`/auth/verify-email`)
+3. **Vérification d'Email** (`/auth/verify-email`)
    - Affichage des instructions de vérification
    - Redirection automatique après vérification réussie
+
+4. **Onboarding** (`/onboarding`)
+   - Étape obligatoire après la création du compte
+   - Collecte des informations complémentaires (téléphone, date de naissance, etc.)
+   - Mise à jour du profil avec `is_onboarded` à `true` après complétion
+   - Redirection vers le tableau de bord approprié selon le rôle
 
 ## 🏋️‍♂️ Gestion des Programmes d'Entraînement
 

@@ -13,8 +13,9 @@ import {
 import { Program, ProgramDay, ProgramDayInput } from '@/types/Program';
 import { TabSystem } from '@/components/shared/TabSystem';
 import { Button } from '@/components/ui/button';
-import { Trash2, Save, Plus, Loader2 } from 'lucide-react';
+import { Trash2, Save, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 interface ExistingDay extends ProgramDayInput {
   id?: string;
@@ -50,6 +51,7 @@ export default function ClientProgramPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProgramFormData>({
     title: '',
@@ -191,16 +193,22 @@ export default function ClientProgramPage({
     }
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
   const handleDelete = async () => {
-    if (!program?.id || !window.confirm('Êtes-vous sûr de vouloir supprimer ce programme ?')) {
-      return;
-    }
+    if (!program?.id) return;
     
     try {
       setDeleting(true);
       await deleteProgram(program.id);
-      // Rediriger vers la page du client après suppression
-      router.push(`/coach/clients/${clientId}`);
+      setShowDeleteDialog(false);
+      toast.success('Programme supprimé avec succès !');
+      // Rediriger vers la page du client après un court délai
+      setTimeout(() => {
+        router.push(`/coach/clients/${clientId}`);
+      }, 1000);
     } catch (err) {
       console.error('Error deleting program:', err);
       setError('Erreur lors de la suppression du programme.');
@@ -301,12 +309,12 @@ export default function ClientProgramPage({
             <Button
               type="button"
               variant="destructive"
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               disabled={deleting}
               className="flex items-center"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              {deleting ? 'Suppression...' : 'Supprimer le programme'}
+              Supprimer le programme
             </Button>
           </div>
           <div className="space-x-3">
@@ -338,6 +346,49 @@ export default function ClientProgramPage({
           </div>
         </div>
       </form>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-red-100 p-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <DialogTitle>Supprimer le programme</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Êtes-vous sûr de vouloir supprimer ce programme ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleting}
+            >
+              Annuler
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={handleDelete}
+              disabled={deleting}
+              className="gap-2"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                'Supprimer définitivement'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
