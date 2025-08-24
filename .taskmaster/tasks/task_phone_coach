@@ -1,0 +1,179 @@
+# Task Phone Coach - Adaptations pour Mobile
+
+## 📊 Page Mes Clients (Coach Dashboard)
+
+### Problèmes identifiés
+- Sidebar coach trop large pour mobile
+- Tableau clients en format desktop difficile à lire sur petit écran
+- Colonnes multiples pas adaptées aux écrans étroits
+- Icônes de suivi (émojis) trop petites pour touch
+- Action "Voir le profil" pas assez visible
+
+### Changements requis
+
+#### Navigation
+- Transformer la sidebar en bottom navigation avec icônes
+- Garder les onglets principaux : Tableau de bord, Mes clients
+- Ajouter un menu burger pour le profil et déconnexion
+- Icône spécifique pour le rôle coach
+
+#### Header
+- Réduire la taille du header
+- Titre "Mes clients" centré
+- Avatar coach à droite
+- Sous-titre "Gérez vos clients et suivez leur progression" plus petit
+
+#### Liste des clients
+**Transformer le tableau en cartes verticales** avec :
+
+**Structure par carte client :**
+- **Header de carte** : Nom du client + avatar
+- **Section poids** : "Poids actuel" avec valeur mise en évidence
+- **Section objectifs** : Objectif en texte court
+- **Section suivi** : 
+  - Date du dernier suivi visible
+  - Icônes de statut plus grandes (émojis 3 derniers jours)
+  - Touch targets de 44px minimum
+- **Action principale** : Bouton "Voir le profil" pleine largeur
+
+**Exemple de carte :**
+```
+┌─────────────────────────────────┐
+│ 👤 Rémy Denay                   │
+├─────────────────────────────────┤
+│ Poids actuel: 75 kg → 75 kg     │
+│ Objectif: test                  │
+│                                 │
+│ Dernier suivi: mer. 13 mar. 12  │
+│ 😊 ✅ 😊                        │
+│                                 │
+│ [    Voir le profil    ]        │
+└─────────────────────────────────┘
+```
+
+#### Interactions tactiles
+- Cartes entièrement cliquables pour aller au profil
+- Swipe horizontal sur une carte pour accéder aux actions rapides
+- Haptic feedback sur les interactions importantes
+- Zones de touch étendues pour tous les éléments
+
+## 🎨 Adaptations Spécifiques Coach Mobile
+
+### Layout responsif
+- **Mobile** (< 768px) : Cartes empilées verticalement
+- Espacement de 16px entre les cartes
+- Padding horizontal de 16px sur les cartes
+
+### Typography coach
+- Nom du client : 18px bold
+- Poids actuel : 16px regular
+- Objectifs : 14px gray
+- Date de suivi : 12px gray
+- Bouton profil : 16px medium
+
+### Couleurs et états
+- Cartes avec border subtil
+- Hover state sur mobile (active state)
+- Indicateurs visuels pour clients non à jour (>3 jours)
+- Badge "nouveau client" si applicable
+
+### Performance
+- Lazy loading pour les avatars clients
+- Pagination ou scroll infini si +20 clients
+- Cache des données clients pour navigation rapide
+- Pull-to-refresh pour actualiser la liste
+
+## 🔧 Composants Techniques à Créer
+
+### 1. CoachMobileNavigation.tsx
+```typescript
+// Bottom navigation spécifique coach
+// Icônes: Dashboard, Clients, (autres futures fonctions coach)
+```
+
+### 2. ClientCard.tsx
+```typescript
+// Carte client mobile avec:
+// - Avatar + nom
+// - Infos poids/objectif
+// - Statuts de suivi (émojis)
+// - Bouton action
+// - Touch handlers
+```
+
+### 3. CoachClientsList.tsx
+```typescript
+// Container pour la liste des cartes
+// - Scroll infini
+// - Pull to refresh
+// - États de loading
+// - Gestion erreurs
+```
+
+### 4. ClientStatusIndicators.tsx
+```typescript
+// Composant pour afficher les 3 derniers statuts
+// - Émojis plus grands (24px)
+// - Touch targets adaptés
+// - Tooltips au long press
+```
+
+## 📱 Responsive Design Coach
+
+### Breakpoints spécifiques
+- **Mobile** : < 768px (priorité)
+- **Tablet** : 768px - 1024px (cartes 2 colonnes)
+- **Desktop** : > 1024px (tableau actuel inchangé)
+
+### Classes Tailwind à utiliser
+```css
+/* Navigation */
+.coach-mobile-nav: "fixed bottom-0 left-0 right-0 bg-white border-t"
+
+/* Cartes clients */
+.client-card: "bg-white rounded-lg border p-4 mb-4 shadow-sm"
+.client-card-mobile: "sm:hidden" /* Masquer sur desktop */
+.client-table-desktop: "hidden sm:block" /* Afficher que sur desktop */
+```
+
+## 🚀 Priorités d'Implémentation Coach
+
+### Phase 1 (Critique - Semaine 1)
+1. ✅ Conversion tableau → cartes clients
+2. ✅ Bottom navigation coach
+3. ✅ Responsive header page clients
+
+### Phase 2 (Important - Semaine 2) 
+1. 🔄 Touch interactions optimisées
+2. 🔄 États visuels clients (à jour/en retard)
+3. 🔄 Performance mobile (lazy loading)
+
+### Phase 3 (Nice to have - Semaine 3)
+1. 📱 Swipe gestures sur cartes
+2. 📱 Pull-to-refresh
+3. 📱 Notifications push coach
+4. 📱 Mode sombre coach
+
+## ⚠️ Contraintes Importantes
+
+### Fonctionnalités à préserver
+- **Tous les liens vers coach/client/[id] restent identiques**
+- Aucun changement sur les pages individuelles client
+- Logique métier coach inchangée
+- Données et API calls identiques
+
+### Tests requis
+- ✅ Navigation coach mobile/desktop
+- ✅ Performance avec 50+ clients
+- ✅ Touch interactions sur iOS/Android
+- ✅ Accessibility coach features
+
+### Notes techniques
+- Utiliser les mêmes patterns que task_phone client
+- Media queries uniquement, pas de modification desktop
+- Classes conditionnelles Tailwind CSS
+- Garder la même architecture de données
+
+---
+
+**Important** : La version desktop coach reste exactement identique. Ces adaptations n'affectent que l'affichage mobile via media queries et classes responsive.

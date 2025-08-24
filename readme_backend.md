@@ -63,6 +63,49 @@ Le fichier `middleware.ts` gère toutes les requêtes entrantes et applique une 
    - Mise à jour du profil avec `is_onboarded` à `true` après complétion
    - Redirection vers le tableau de bord approprié selon le rôle
 
+## 📅 Gestion du Calendrier
+
+### Services Disponibles
+
+#### `calendarService.ts`
+Gestion complète des cartes de calendrier pour le suivi des clients.
+
+**Fonctions principales :**
+- `getCalendarCardsWithInfo(clientId?: string)` : Récupère les cartes de calendrier avec des informations supplémentaires
+- `getClientCalendarCards(clientId: string)` : Récupère toutes les cartes d'un client spécifique
+- `createCalendarCard(cardData: Omit<CalendarCard, 'id' | 'created_at' | 'updated_at' | 'is_active'>)` : Crée une nouvelle carte de calendrier
+- `updateCalendarCard(id: string, updates: Partial<CalendarCard>)` : Met à jour une carte existante
+- `deleteCalendarCard(id: string)` : Supprime une carte de calendrier
+- `getUpcomingCards(clientId: string)` : Récupère les cartes à venir (2 prochaines semaines)
+
+**Sécurité :**
+- Seuls les coachs peuvent créer, mettre à jour ou supprimer des cartes
+- Les clients ne peuvent voir que leurs propres cartes
+- Les coachs peuvent voir toutes les cartes
+
+**Types :**
+```typescript
+interface CalendarCard {
+  id?: string;
+  client_id: string;
+  title: string;
+  description?: string;
+  start_date: string; // Format: YYYY-MM-DD
+  end_date: string;   // Format: YYYY-MM-DD
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface CalendarCardWithInfo extends CalendarCard {
+  card_duration_days: number;
+  status: 'upcoming' | 'current' | 'past';
+  client_first_name: string;
+  client_last_name: string;
+  client_email: string;
+}
+```
+
 ## 🏋️‍♂️ Gestion des Programmes d'Entraînement
 
 ### Services Disponibles

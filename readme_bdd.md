@@ -7,8 +7,92 @@
 - [Triggers et Fonctions](#-triggers-et-fonctions)
 - [Sécurité et Bonnes Pratiques](#-sécurité-et-bonnes-pratiques)
 - [Requêtes Utiles](#-requêtes-utiles)
+- [Vues](#-vues)
 
 ## 🏗️ Structure des Tables
+
+### Table: `calendar_cards`
+Gère les cartes de calendrier pour le suivi des clients.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire (généré automatiquement avec `gen_random_uuid()`) |
+| `client_id` | UUID | Référence au client (clé étrangère vers profiles.id) |
+| `title` | TEXT | Titre de la carte (obligatoire) |
+| `description` | TEXT | Description détaillée (optionnel) |
+| `start_date` | DATE | Date de début (obligatoire) |
+| `end_date` | DATE | Date de fin (obligatoire) |
+| `is_active` | BOOLEAN | Si la carte est actuellement active (défaut: false) |
+| `created_at` | TIMESTAMP WITH TIME ZONE | Date de création (défaut: now()) |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | Date de mise à jour (défaut: now()) |
+
+**Contraintes** :
+- `check_dates` : Vérifie que end_date >= start_date
+
+**Index** :
+- `idx_calendar_cards_client_id` : Optimise les requêtes par client
+- `idx_calendar_cards_dates` : Optimise les requêtes par plage de dates
+- `idx_calendar_cards_active` : Optimise la recherche des cartes actives
+
+**Triggers** :
+- `update_calendar_cards_modtime` : Met à jour automatiquement `updated_at` avant chaque mise à jour
+
+**Politiques de sécurité (RLS)** :
+1. **Clients can view their own calendar cards**
+   - **Accès** : Lecture (SELECT)
+   - **Condition** : Un client ne peut voir que ses propres cartes
+   ```sql
+   (client_id = auth.uid()) 
+   AND (EXISTS (
+     SELECT 1 FROM profiles 
+     WHERE (profiles.id = auth.uid()) 
+     AND (profiles.role = 'client'::user_role)
+   ))
+   ```
+
+2. **Coaches can view all calendar cards**
+   - **Accès** : Lecture (SELECT)
+   - **Condition** : Les coachs peuvent voir toutes les cartes
+   ```sql
+   EXISTS (
+     SELECT 1 FROM profiles 
+     WHERE (profiles.id = auth.uid()) 
+     AND (profiles.role = 'coach'::user_role)
+   )
+   ```
+
+3. **Only coaches can insert calendar cards**
+   - **Accès** : Insertion (INSERT)
+   - **Condition** : Seuls les coachs peuvent insérer des cartes
+   ```sql
+   EXISTS (
+     SELECT 1 FROM profiles 
+     WHERE (profiles.id = auth.uid()) 
+     AND (profiles.role = 'coach'::user_role)
+   )
+   ```
+
+4. **Only coaches can update calendar cards**
+   - **Accès** : Mise à jour (UPDATE)
+   - **Condition** : Seuls les coachs peuvent mettre à jour des cartes
+   ```sql
+   EXISTS (
+     SELECT 1 FROM profiles 
+     WHERE (profiles.id = auth.uid()) 
+     AND (profiles.role = 'coach'::user_role)
+   )
+   ```
+
+5. **Only coaches can delete calendar cards**
+   - **Accès** : Suppression (DELETE)
+   - **Condition** : Seuls les coachs peuvent supprimer des cartes
+   ```sql
+   EXISTS (
+     SELECT 1 FROM profiles 
+     WHERE (profiles.id = auth.uid()) 
+     AND (profiles.role = 'coach'::user_role)
+   )
+   ```
 
 ### Table: `profiles`
 Stocke les informations des utilisateurs (clients et coachs).
@@ -110,6 +194,7 @@ Jours individuels dans un programme nutritionnel.
 | `program_days` | `program_id` | `programs` | `id` | Un programme contient plusieurs jours |
 | `nutrition_programs` | `client_id` | `profiles` | `id` | Un utilisateur peut avoir plusieurs programmes nutritionnels |
 | `nutrition_days` | `nutrition_program_id` | `nutrition_programs` | `id` | Un programme nutritionnel contient plusieurs jours |
+| `calendar_cards` | `client_id` | `profiles` | `id` | Un client peut avoir plusieurs cartes de calendrier |
 
 ## 🔒 Politiques de Sécurité (RLS)
 
@@ -344,35 +429,86 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ## 🔍 Requêtes Utiles
 
-### Obtenir les journaux d'un utilisateur
+### Pour les clients : Obtenir leurs cartes de calendrier
 ```sql
-SELECT * FROM daily_logs 
-WHERE user_id = auth.uid()
-ORDER BY date DESC;
+-- Cartes actives d'un client
+SELECT * FROM calendar_cards 
+WHERE client_id = auth.uid()
+AND is_active = true
+ORDER BY start_date;
+
+-- Toutes les cartes d'un client avec statut
+SELECT * FROM calendar_cards_with_info
+WHERE client_id = auth.uid()
+ORDER BY start_date DESC;
 ```
 
-### Compter les entrées de journal par mois
+### Pour les coachs : Gérer les cartes
 ```sql
+-- Toutes les cartes créées par le coach
+SELECT * FROM calendar_cards
+WHERE coach_id = auth.uid()
+ORDER BY start_date DESC;
+
+-- Cartes actives pour un client spécifique
+SELECT * FROM calendar_cards
+WHERE coach_id = auth.uid()
+AND client_id = 'client-uuid-here'
+AND is_active = true;
+
+-- Mise à jour de la progression d'une carte
+UPDATE calendar_cards
+SET progress = 75,
+    updated_at = NOW()
+WHERE id = 'card-uuid-here'
+AND coach_id = auth.uid();
+```
+
+### Requêtes d'analyse
+```sql
+-- Nombre de cartes par statut
 SELECT 
-  DATE_TRUNC('month', date) AS month,
-  COUNT(*) AS entries
-FROM daily_logs
-WHERE user_id = auth.uid()
-GROUP BY month
-ORDER BY month;
+  status,
+  COUNT(*) as count
+FROM calendar_cards_with_info
+WHERE coach_id = auth.uid()
+GROUP BY status;
+
+-- Durée moyenne des cartes
+SELECT 
+  AVG(end_date - start_date) as avg_duration_days
+FROM calendar_cards
+WHERE coach_id = auth.uid();
 ```
 
-### Vérifier les autorisations
+## 👁️ Vues
+
+### `calendar_cards_with_info`
+Vue enrichie avec des informations calculées pour les cartes de calendrier.
+
+**Colonnes** :
+- Toutes les colonnes de `calendar_cards`
+- `duration` : Durée formatée (ex: "2 semaines")
+- `client_name` : Nom complet du client
+- `coach_name` : Nom complet du coach
+- `status` : État actuel ('upcoming', 'current', 'past')
+
+**Exemple d'utilisation** :
 ```sql
--- Vérifier si l'utilisateur est un coach
-SELECT is_coach();
+-- Vue complète avec toutes les informations
+SELECT * FROM calendar_cards_with_info
+WHERE coach_id = auth.uid()
+ORDER BY start_date DESC;
 ```
 
 ## 📊 Schéma Relationnel
 
 ```
 profiles (1) → (n) daily_logs
+profiles (1) → (n) calendar_cards (en tant que client)
+profiles (1) → (n) calendar_cards (en tant que coach)
 ```
 
 - Un utilisateur peut avoir plusieurs entrées de journal
-- Chaque entrée de journal appartient à un seul utilisateur
+- Un utilisateur peut avoir plusieurs cartes de calendrier (en tant que client)
+- Un coach peut créer plusieurs cartes de calendrier

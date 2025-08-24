@@ -1,0 +1,102 @@
+
+
+Il reste maintenant **UNIQUEMENT** des erreurs TypeScript classiques à corriger.
+
+## 🚨 ERREURS CRITIQUES RESTANTES (10 erreurs)
+
+### 1. `src/app/onboarding/page.tsx` - Ligne 120
+```typescript
+// REMPLACER :
+const handleSubmit = async (data: any) => {
+
+// PAR :
+const handleSubmit = async (data: Record<string, string | number | boolean | string[]>) => {
+```
+
+### 2. `src/components/shared/Form.tsx` - Ligne 10 (2 erreurs)
+```typescript
+// REMPLACER :
+onSubmit: (data: any) => any
+
+// PAR :
+onSubmit: (data: Record<string, unknown>) => void | Promise<void>
+```
+
+### 3. `src/components/ui/textarea.tsx` - Ligne 4
+```typescript
+// REMPLACER :
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+// PAR (option 1 - recommandée) :
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+
+// OU (option 2) :
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  // Props additionnelles si nécessaires dans le futur
+}
+```
+
+### 4. `src/lib/auth.ts` - Lignes 6, 7, 19, 79 (4 erreurs)
+```typescript
+// EN HAUT DU FICHIER, AJOUTER :
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
+
+// LIGNE 6-7, REMPLACER :
+export let user: any = null;
+let userRole: any = null;
+
+// PAR :
+export let user: User | null = null;
+let userRole: 'client' | 'coach' | null = null;
+
+// LIGNE 19, REMPLACER :
+export const setUser = (newUser: any, role?: any) => {
+
+// PAR :
+export const setUser = (newUser: User | null, role?: 'client' | 'coach' | null) => {
+
+// LIGNE 79, REMPLACER :
+const handleAuthStateChange = (event: any, session: any) => {
+
+// PAR :
+const handleAuthStateChange = (event: AuthChangeEvent, session: Session | null) => {
+```
+
+### 5. `src/lib/supabase.ts` - Ligne 22
+```typescript
+// REMPLACER :
+}: any) => {
+
+// PAR :
+}: {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  schema: string;
+  table: string;
+  old?: Record<string, unknown>;
+  new?: Record<string, unknown>;
+}) => {
+```
+
+### 6. `src/services/clientService.ts` - Lignes 100, 203, 223 (3 erreurs)
+```typescript
+// EN HAUT DU FICHIER, AJOUTER :
+import type { TablesUpdate } from '@/types/database.types';
+
+// LIGNE 100, REMPLACER :
+export const updateProfile = async (profileData: any) => {
+
+// PAR :
+export const updateProfile = async (profileData: TablesUpdate<'profiles'>) => {
+
+// LIGNE 203, REMPLACER :
+.single() as any;
+
+// PAR :
+.single();
+
+// LIGNE 223, REMPLACER :
+} catch (e: any) {
+
+// PAR :
+} catch (e: unknown) {
+```

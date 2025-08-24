@@ -42,7 +42,8 @@ const validateFormData = (formData: Partial<UserProfile>): string | null => {
 };
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare } from 'lucide-react';
+import { Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare, Calendar } from 'lucide-react';
+import { UpcomingSessions } from '@/components/shared/calendar/UpcomingSessions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -60,24 +61,22 @@ import {
 } from '@/components/ui/dialog';
 import { fetchClients, fetchClientLogs, updateClientProfile, type ClientProfile, type ClientLogsResult } from '@/services/clientService';
 import type { ClientData, LogData, ProfileData, ApiError } from '@/types/client';
+import type { TablesUpdate } from '@/types/database.types';
 
 type UserProfile = ClientProfile;
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
 import { LogHistory } from '@/components/tracking/LogHistory';
 
-type ClientProfilePageProps = {
-  params: {
-    id: string;
-  };
-  searchParams?: {
-    tab?: string;
-  };
-};
-
-export default function ClientProfilePage({ params, searchParams = {} }: ClientProfilePageProps) {
-  const router = useRouter();
-  
+export default function ClientProfilePage({
+  params,
+  searchParams = {}
+}: {
+  params: { id: string };
+  searchParams?: { tab?: string };
+}) {
+  // Récupération de l'ID du client depuis les paramètres d'URL
   const clientId = params.id;
+  const router = useRouter();
   const activeTab = searchParams.tab || 'profil';
 
   const [profile, setProfile] = useState<ClientProfile | null>(null);
@@ -106,14 +105,17 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
     if (!profile) return;
     
     try {
+      // S'assurer que la valeur est une chaîne de caractères
+      const valueToSave = Array.isArray(editedValue) ? editedValue.join('\n') : editedValue;
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ [field]: editedValue })
+        .update({ [field]: valueToSave })
         .eq('id', profile.id);
       
       if (error) throw error;
       
-      setProfile(prev => prev ? { ...prev, [field]: editedValue } : null);
+      setProfile(prev => prev ? { ...prev, [field]: valueToSave } : null);
       setEditingField(null);
       toast.success('Modifications enregistrées avec succès');
     } catch (error) {
@@ -125,11 +127,11 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
   // Charger le programme d'entraînement actif du client
   useEffect(() => {
     const loadProgram = async () => {
-      if (!params.id) return;
+      if (!clientId) return;
       
       try {
         setProgramLoading(true);
-        const activeProgram = await getActiveProgram(params.id);
+        const activeProgram = await getActiveProgram(clientId);
         // S'assurer que les jours ont un day_order valide
         if (activeProgram?.program_days) {
           activeProgram.program_days = activeProgram.program_days.map((day, index) => ({
@@ -147,12 +149,12 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
     };
     
     loadProgram();
-  }, [params.id]);
+  }, [clientId]);
 
   // Charger le programme nutritionnel actif du client
   useEffect(() => {
     const loadNutritionProgram = async () => {
-      if (!params.id) return;
+      if (!clientId) return;
       
       try {
         setNutritionLoading(true);
@@ -180,17 +182,17 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
     };
     
     loadNutritionProgram();
-  }, [params.id]);
+  }, [clientId]);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!params.id) return;
+      if (!clientId) return;
       
       try {
         setLoading(true);
         
         const clients = await fetchClients();
-        const clientProfile = clients.find(client => client.id === params.id);
+        const clientProfile = clients.find(client => client.id === clientId);
         
         if (!clientProfile) {
           toast.error('Profil client non trouvé');
@@ -198,7 +200,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
         }
         
         // Récupérer les logs du client
-        const logsData = await fetchClientLogs(params.id);
+        const logsData = await fetchClientLogs(clientId);
         
         setProfile(clientProfile);
         setLogs(logsData);
@@ -212,7 +214,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
     };
 
     loadData();
-  }, [params.id, router]);
+  }, [clientId, router]);
 
   if (loading) {
     return <div>Chargement...</div>;
@@ -258,7 +260,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
           starting_weight: profile.starting_weight || 0,
           sports_practiced: profile.sports_practiced || '',
           objectives: profile.objectives || '',
-          injuries: profile.injuries || ''
+          injuries: Array.isArray(profile.injuries) ? profile.injuries.join('\n') : (profile.injuries || '')
         });
       }
     }, [profile]);
@@ -293,13 +295,30 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
           throw new Error(validationError);
         }
         
+        // Préparer les données pour la mise à jour avec le bon typage
+        const updateData: TablesUpdate<'profiles'> = { 
+          ...formData,
+          // S'assurer que injuries est une chaîne de caractères ou null
+          injuries: formData.injuries !== undefined
+            ? (Array.isArray(formData.injuries) 
+                ? formData.injuries.join('\n') 
+                : formData.injuries) || null
+            : undefined,
+          // S'assurer que sports_practiced est un tableau de chaînes ou null
+          sports_practiced: formData.sports_practiced !== undefined
+            ? (Array.isArray(formData.sports_practiced) 
+                ? formData.sports_practiced 
+                : formData.sports_practiced ? [formData.sports_practiced] : null)
+            : undefined
+        };
+        
         // Journaliser les données envoyées pour le débogage
         console.log('[handleSave] Tentative de mise à jour du profil avec les données:', {
           clientId: profile.id,
-          updates: formData
+          updates: updateData
         });
         
-        const { data, error } = await updateClientProfile(profile.id, formData);
+        const { data, error } = await updateClientProfile(profile.id, updateData);
         
         if (error) {
           // Type assertion pour l'erreur
@@ -670,7 +689,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
             </div>
             {editingField !== 'injuries' && (
               <button 
-                onClick={() => handleEditClick('injuries', profile?.injuries || '')}
+                onClick={() => handleEditClick('injuries', Array.isArray(profile?.injuries) ? profile.injuries.join('\n') : (profile?.injuries || ''))}
                 className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
                 title="Modifier les blessures et limitations"
               >
@@ -707,7 +726,7 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
             </div>
           ) : (
             <p className="text-xs text-gray-600 whitespace-pre-line">
-              {profile?.injuries || 'Aucune blessure ou limitation signalée'}
+              {Array.isArray(profile?.injuries) ? profile.injuries.join('\n') : (profile?.injuries || 'Aucune blessure ou limitation signalée')}
             </p>
           )}
         </div>
@@ -750,11 +769,11 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
         <TabsContent value="suivi" className="space-y-6 mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Résumé des indicateurs</h3>
-            <MetricsSummary clientId={params.id} />
+            <MetricsSummary clientId={clientId} />
           </div>
           
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <LogHistory clientId={params.id} />
+            <LogHistory clientId={clientId} />
           </div>
         </TabsContent>
 
@@ -768,10 +787,10 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
                   href={
                     {
                       pathname: '/coach/clients/[id]/programme',
-                      query: { id: params.id }
+                      query: { id: clientId }
                     }
                   }
-                  as={`/coach/clients/${params.id}/programme`}
+                  as={`/coach/clients/${clientId}/programme`}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {program ? 'Modifier le programme' : 'Créer un programme'}
@@ -849,9 +868,9 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
                   <Link
                     href={{
                       pathname: '/coach/clients/[id]/programme',
-                      query: { id: params.id }
+                      query: { id: clientId }
                     }}
-                    as={`/coach/clients/${params.id}/programme`}
+                    as={`/coach/clients/${clientId}/programme`}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Créer un programme
@@ -872,10 +891,10 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
                   href={
                     {
                       pathname: '/coach/clients/[id]/nutrition',
-                      query: { id: params.id }
+                      query: { id: clientId }
                     }
                   }
-                  as={`/coach/clients/${params.id}/nutrition`}
+                  as={`/coach/clients/${clientId}/nutrition`}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {nutritionProgram ? 'Modifier le programme' : 'Créer un programme'}
@@ -953,9 +972,9 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
                   <Link
                     href={{
                       pathname: '/coach/clients/[id]/nutrition',
-                      query: { id: params.id }
+                      query: { id: clientId }
                     }}
-                    as={`/coach/clients/${params.id}/nutrition`}
+                    as={`/coach/clients/${clientId}/nutrition`}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Créer un programme nutritionnel
@@ -968,18 +987,8 @@ export default function ClientProfilePage({ params, searchParams = {} }: ClientP
 
         {/* Contenu de l'onglet Calendrier */}
         <TabsContent value="calendrier" className="mt-6">
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Calendrier</h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">Visualisez et gérez le calendrier des séances</p>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-12 sm:px-6">
-              <div className="text-center">
-                <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Bientôt disponible</h3>
-                <p className="mt-1 text-sm text-gray-500">Cette fonctionnalité sera bientôt accessible.</p>
-              </div>
-            </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <UpcomingSessions clientId={clientId} isCoach={true} limit={10} />
           </div>
         </TabsContent>
       </Tabs>

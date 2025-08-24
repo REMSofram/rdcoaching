@@ -1,0 +1,96 @@
+# Corrections à apporter - Erreurs de build
+
+## Erreurs critiques (bloquent la compilation)
+
+### 1. `./src/app/coach/clients/page.tsx` - Ligne 16
+```typescript
+// Remplacer :
+// someVariable: any
+// Par :
+someVariable: unknown
+// ou spécifier le type exact selon le contexte
+```
+
+### 2. `./src/app/coach/clients/[id]/page.tsx` - Lignes 162 et 263
+```typescript
+// Remplacer tous les `: any` par des types spécifiques
+// Ligne 162 et 263 : spécifier le type exact au lieu de `any`
+```
+
+### 3. `./src/app/coach/clients/[id]/programme/page.tsx` - Ligne 260
+```typescript
+// Ligne 260 : remplacer `: any` par le type spécifique
+```
+
+### 4. `./src/app/onboarding/page.tsx` - Ligne 120
+```typescript
+// Ligne 120 : spécifier le type au lieu de `any`
+```
+
+### 5. `./src/components/shared/Form.tsx` - Ligne 10
+```typescript
+// Remplacer :
+// (param1: any, param2: any) =>
+// Par des types spécifiques selon le contexte
+```
+
+### 6. `./src/components/ui/textarea.tsx` - Ligne 4
+```typescript
+// Supprimer l'interface vide ou lui donner du contenu :
+// interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+//   // Ajouter des propriétés spécifiques si nécessaire
+// }
+```
+
+### 7. `./src/lib/auth.ts` - Lignes 6, 7, 19, 79
+```typescript
+// Remplacer tous les `: any` par des types spécifiques :
+// - User types de Supabase
+// - Session types
+// - Etc.
+```
+
+### 8. `./src/lib/supabase.ts` - Ligne 22
+```typescript
+// Ligne 22 : spécifier le type au lieu de `any`
+```
+
+### 9. `./src/services/clientService.ts` - Lignes 100, 203, 223
+```typescript
+// Remplacer tous les `: any` par des types spécifiques
+```
+
+## Avertissements (ne bloquent pas mais à corriger)
+
+### Variables non utilisées
+- Supprimer toutes les variables/imports non utilisés mentionnés dans les warnings
+- Ou les préfixer par `_` si elles sont nécessaires pour plus tard : `_router`, `_user`, etc.
+
+### Hooks React
+- **DailyLogForm.tsx** : Ajouter les dépendances manquantes dans useEffect
+- **LogHistory.tsx** : Corriger les dépendances des useEffect
+- **MetricsSummary.tsx** : Ajouter 'targetClientId' dans les dépendances
+- **TabSystem.tsx** : Ajouter 'dayType' dans les dépendances useCallback
+
+### Corrections spécifiques
+
+#### `./src/app/coach/clients/[id]/page.tsx` - Ligne 258
+```typescript
+// Supprimer 'profile' des dépendances useEffect ou corriger la logique
+useEffect(() => {
+  // logic here
+}, []); // Enlever 'profile' si pas nécessaire
+```
+
+#### `./src/app/onboarding/page.tsx` - Ligne 3
+```typescript
+// Supprimer l'import useEffect si pas utilisé :
+import { useState } from 'react'; // Enlever useEffect
+```
+
+## Actions prioritaires
+
+1. **URGENT** : Corriger tous les `: any` en types spécifiques
+2. Nettoyer les imports/variables non utilisés
+3. Corriger les dépendances des hooks React
+4. Tester la compilation avec `npm run build`

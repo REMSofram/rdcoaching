@@ -1,0 +1,93 @@
+Problèmes identifiés
+
+Sidebar trop large pour mobile
+Indicateurs en ligne horizontale pas optimaux
+Tableau historique difficile à lire sur petit écran
+Bouton "Remplir mon journal du jour" mal positionné
+
+Changements requis
+Navigation
+
+Transformer la sidebar en bottom navigation avec icônes
+Garder 4 onglets principaux : Suivi, Programme, Nutrition, Calendrier
+Ajouter un menu burger pour le profil et déconnexion
+
+Header
+
+Réduire la taille du header
+Bouton "Remplir mon journal" en position fixe en bas de page (floating action button)
+Titre "Suivi" centré avec avatar utilisateur à droite
+
+Résumé des indicateurs
+
+Passer d'une disposition horizontale à verticale
+Chaque indicateur sur une ligne complète
+Taille de police plus grande pour les valeurs principales
+Espacement vertical augmenté entre les cartes
+
+Historique des enregistrements
+
+Transformer le tableau en cartes verticales
+Une carte par enregistrement avec :
+
+Date en header de carte
+Informations en colonnes de 2 (Poids/Sommeil, Énergie/Appétit)
+
+
+Ajouter un système de pagination ou scroll infini
+Bouton "Voir plus" si nécessaire
+
+
+----------
+
+🎨 Adaptations Générales Mobile
+Responsive Design
+
+Breakpoints à définir :
+
+Mobile : < 768px
+Tablet : 768px - 1024px
+Desktop : > 1024px (actuel)
+
+
+
+Typography
+
+Augmenter toutes les tailles de police de 2-4px
+Minimum 16px pour les champs de saisie (évite le zoom iOS)
+Contraste renforcé pour la lisibilité
+
+Touch Targets
+
+Minimum 44px de hauteur pour tous les éléments cliquables
+Espacement de 8px minimum entre les éléments tactiles
+Zones de touch étendues pour les petits éléments
+
+Performance Mobile
+
+Lazy loading pour les images et contenus lourds
+Optimisation des requêtes Supabase pour mobile
+Cache local pour les données fréquemment consultées
+
+UX Spécifique Mobile
+
+Pull-to-refresh sur les pages principales
+Swipe gestures pour naviguer entre les jours
+Haptic feedback pour les actions importantes
+Loading states adaptés avec spinners mobiles
+
+
+🔧 Implémentation Technique
+Framework CSS
+
+Utiliser Tailwind CSS responsive utilities
+Classes conditionnelles : sm:, md:, lg:
+Approach mobile-first
+
+Composants à créer
+
+MobileNavigation.tsx - Bottom nav
+FloatingActionButton.tsx - Bouton journal flottant
+ExerciseCard.tsx - Carte d'exercice avec checkbox
+IndicatorCard.tsx - Indicateur vertical mobile
+HistoryCard.tsx - Historique en format carte
