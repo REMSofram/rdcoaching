@@ -42,7 +42,7 @@ const validateFormData = (formData: Partial<UserProfile>): string | null => {
 };
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare, Calendar } from 'lucide-react';
+import { Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare, Calendar, Plus } from 'lucide-react';
 import { UpcomingSessions } from '@/components/shared/calendar/UpcomingSessions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,7 @@ export default function ClientProfilePage({
   const [programLoading, setProgramLoading] = useState(true);
   const [nutritionProgram, setNutritionProgram] = useState<NutritionProgram | null>(null);
   const [nutritionLoading, setNutritionLoading] = useState(true);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
 
   const handleEditClick = (field: string, currentValue: string | string[] | null | undefined) => {
@@ -225,7 +226,7 @@ export default function ClientProfilePage({
   }
   
   // Calculer l'âge à partir de la date de naissance
-  const calculateAge = (birthDate?: string) => {
+  const calculateAge = (birthDate?: string | null): string => {
     if (!birthDate) return 'Non spécifié';
     
     const today = new Date();
@@ -239,7 +240,7 @@ export default function ClientProfilePage({
     if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
       age--;
     }
-    return age;
+    return age.toString();
   };
 
   // Composant pour la modal des informations personnelles
@@ -608,8 +609,8 @@ export default function ClientProfilePage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col lg:flex-row gap-6 w-full">
+        <div className="lg:w-1/4">
           <Link href="/coach/clients" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-2">
             <ArrowLeft className="mr-1 h-4 w-4" /> Retour à la liste des clients
           </Link>
@@ -626,11 +627,9 @@ export default function ClientProfilePage({
           </p>
           <PersonalInfoModal />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Objectifs */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200 relative group">
+        <div className="lg:w-2/5 bg-white p-4 rounded-lg border border-gray-200 relative group">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
               <Activity className="h-4 w-4 mr-2 text-green-600" />
@@ -674,14 +673,26 @@ export default function ClientProfilePage({
               </div>
             </div>
           ) : (
-            <p className="text-xs text-gray-600 whitespace-pre-line">
-              {profile?.objectives || 'Aucun objectif défini'}
-            </p>
+            <div className="relative">
+              <div 
+                className={`text-xs text-gray-600 whitespace-pre-line overflow-hidden transition-all duration-300 ${expandedCard === 'objectives' ? 'max-h-[500px]' : 'max-h-[80px]'}`}
+              >
+                {profile?.objectives || 'Aucun objectif défini'}
+              </div>
+              {(profile?.objectives?.split('\n').length || 0) > 4 && (
+                <button 
+                  onClick={() => setExpandedCard(expandedCard === 'objectives' ? null : 'objectives')}
+                  className="text-xs text-blue-600 hover:text-blue-800 mt-1 block"
+                >
+                  {expandedCard === 'objectives' ? 'Voir moins' : 'Voir plus'}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
         {/* Blessures et limitations */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200 relative group">
+        <div className="lg:w-2/5 bg-white p-4 rounded-lg border border-gray-200 relative group">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
               <Activity className="h-4 w-4 mr-2 text-red-600" />
@@ -725,15 +736,35 @@ export default function ClientProfilePage({
               </div>
             </div>
           ) : (
-            <p className="text-xs text-gray-600 whitespace-pre-line">
-              {Array.isArray(profile?.injuries) ? profile.injuries.join('\n') : (profile?.injuries || 'Aucune blessure ou limitation signalée')}
-            </p>
+            <div className="relative">
+              <div 
+                className={`text-xs text-gray-600 whitespace-pre-line overflow-hidden transition-all duration-300 ${expandedCard === 'injuries' ? 'max-h-[500px]' : 'max-h-[80px]'}`}
+              >
+                {Array.isArray(profile?.injuries) 
+                  ? profile.injuries.join('\n') 
+                  : (profile?.injuries || 'Aucune blessure ou limitation déclarée')}
+              </div>
+              {(
+                (Array.isArray(profile?.injuries) 
+                  ? profile?.injuries.join('\n').split('\n').length 
+                  : (profile?.injuries?.split('\n').length || 0)
+                ) > 4
+              ) && (
+                <button 
+                  onClick={() => setExpandedCard(expandedCard === 'injuries' ? null : 'injuries')}
+                  className="text-xs text-blue-600 hover:text-blue-800 mt-1 block"
+                >
+                  {expandedCard === 'injuries' ? 'Voir moins' : 'Voir plus'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Onglets */}
-      <Tabs defaultValue="suivi" className="w-full">
+      <div className="grid grid-cols-1 gap-4">
+        {/* Onglets */}
+        <Tabs defaultValue="suivi" className="w-full">
         <TabsList className="grid w-full md:w-3/4 grid-cols-5 bg-gray-100">
           <TabsTrigger 
             value="suivi" 
@@ -791,8 +822,9 @@ export default function ClientProfilePage({
                     }
                   }
                   as={`/coach/clients/${clientId}/programme`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
+                  <Plus className="h-4 w-4 mr-2" />
                   {program ? 'Modifier le programme' : 'Créer un programme'}
                 </Link>
               </div>
@@ -871,8 +903,9 @@ export default function ClientProfilePage({
                       query: { id: clientId }
                     }}
                     as={`/coach/clients/${clientId}/programme`}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
+                    <Plus className="h-4 w-4 mr-2" />
                     Créer un programme
                   </Link>
                 </div>
@@ -895,8 +928,9 @@ export default function ClientProfilePage({
                     }
                   }
                   as={`/coach/clients/${clientId}/nutrition`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
+                  <Plus className="h-4 w-4 mr-2" />
                   {nutritionProgram ? 'Modifier le programme' : 'Créer un programme'}
                 </Link>
               </div>
@@ -975,8 +1009,9 @@ export default function ClientProfilePage({
                       query: { id: clientId }
                     }}
                     as={`/coach/clients/${clientId}/nutrition`}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                   >
+                    <Plus className="h-4 w-4 mr-2" />
                     Créer un programme nutritionnel
                   </Link>
                 </div>
@@ -991,7 +1026,8 @@ export default function ClientProfilePage({
             <UpcomingSessions clientId={clientId} isCoach={true} limit={10} />
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -84,15 +84,15 @@ export default function ClientCard({
 
         {/* Suivi */}
         <div>
-          <div className="text-xs text-gray-500 mb-1">Suivi (3 derniers jours)</div>
+          <div className="text-xs text-gray-500 mb-1">Suivi (4 derniers jours)</div>
           <div className="flex items-center justify-start">
             {(() => {
               const recent = [...(logs || [])]
                 .sort((a, b) => b.date.getTime() - a.date.getTime())
-                .slice(0, 3);
+                .slice(0, 4);
               const items = recent.length
                 ? recent
-                : [0, 1, 2].map((daysAgo) => ({
+                : [0, 1, 2, 3].map((daysAgo) => ({
                     date: new Date(Date.now() - daysAgo * 86400000),
                     status: (daysAgo === 0 ? "pending" : "missed") as Status,
                   }));

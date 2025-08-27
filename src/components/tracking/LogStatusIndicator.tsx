@@ -7,6 +7,7 @@ interface LogStatusIndicatorProps {
 }
 
 export const LogStatusIndicator = ({ status, date, size = 'md' }: LogStatusIndicatorProps) => {
+  console.log('LogStatusIndicator reçu:', { status, date: date?.toISOString?.() });
   const dayOfWeek = date.toLocaleDateString('fr-FR', { weekday: 'short' });
   const dayOfMonth = date.getDate();
   const textSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm' : 'text-xs';
@@ -49,7 +50,7 @@ export const LogStatusIndicator = ({ status, date, size = 'md' }: LogStatusIndic
   const statusInfo = getStatusInfo();
   
   return (
-    <div className="flex flex-col items-center mx-1 group relative" title={statusInfo.tooltip}>
+    <div className="flex flex-col items-center mx-0.5 group relative" title={statusInfo.tooltip} style={{ minWidth: '40px' }}>
       <div className={`${textSize} ${statusInfo.textColor} font-medium mb-1`}>
         {dayOfWeek} {dayOfMonth}
       </div>

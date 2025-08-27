@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CoachLayout from '@/layout/CoachLayout';
-import { Users, ArrowRight, Loader2, UserPlus, X } from 'lucide-react';
+import { Users, ArrowRight, Loader2, UserPlus, X, Cake } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
 import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
@@ -11,12 +11,34 @@ import ClientCard from '@/components/mobile/coach/ClientCard';
 import { useNotification } from '@/contexts/NotificationContext';
 
 // Type pour les données des clients
+// Fonction pour vérifier si c'est l'anniversaire du client
+const isBirthdayToday = (birthDate?: string | null): boolean => {
+  if (!birthDate) return false;
+  
+  try {
+    const today = new Date();
+    const birthDateObj = new Date(birthDate);
+    
+    // Vérifier si le jour et le mois correspondent
+    return (
+      birthDateObj.getDate() === today.getDate() &&
+      birthDateObj.getMonth() === today.getMonth()
+    );
+  } catch (error) {
+    console.error('Erreur lors de la vérification de la date de naissance:', error);
+    return false;
+  }
+};
+
 // Type pour les logs avec lastWeight
 type ClientLogsWithLastWeight = Array<{
+  id: string;
+  client_id: string;
+  log_date: string;
   date: Date;
   status: 'completed' | 'pending' | 'missed';
   weight?: number;
-  [key: string]: string | number | boolean | Date | undefined;
+  [key: string]: unknown;
 }> & {
   lastWeight?: number;
 };
@@ -269,9 +291,9 @@ export default function CoachClientsPage() {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[320px]"
                 >
-                  Suivi (3 derniers jours)
+                  Suivi (4 derniers jours)
                 </th>
                 <th scope="col" className="relative px-6 py-3">
                   <span className="sr-only">Actions</span>
@@ -289,8 +311,9 @@ export default function CoachClientsPage() {
                 clients.map((client) => (
                   <tr 
                     key={client.id} 
-                    className="hover:bg-gray-50 cursor-pointer group"
+                    className={`hover:bg-gray-50 cursor-pointer group relative ${isBirthdayToday(client.birth_date) ? 'bg-gray-900/5 border-l-4 border-blue-800' : ''}`}
                     onClick={() => router.push(`/coach/clients/${client.id}`)}
+                    title={isBirthdayToday(client.birth_date) ? `Joyeux anniversaire ${client.first_name} ! 🎉` : ''}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -298,8 +321,11 @@ export default function CoachClientsPage() {
                           <Users className="h-5 w-5 text-primary" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 flex items-center">
                             {client.first_name} {client.last_name}
+                            {isBirthdayToday(client.birth_date) && (
+                              <Cake className="ml-2 h-4 w-4 text-blue-800" />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -341,32 +367,63 @@ export default function CoachClientsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center justify-start space-x-1">
-                        {client.logs.length > 0 ? (
-                          // Trier les logs par date décroissante pour afficher du plus récent au plus ancien
-                          [...client.logs]
-                            .sort((a, b) => b.date.getTime() - a.date.getTime())
-                            .map((log, index) => (
-                              <LogStatusIndicator 
-                                key={index} 
-                                status={log.status} 
-                                date={log.date} 
-                              />
-                            ))
-                        ) : (
-                          // Si pas de logs, afficher les 3 derniers jours
-                          [0, 1, 2].map((daysAgo) => {
-                            const date = new Date();
-                            date.setDate(date.getDate() - daysAgo);
-                            return (
-                              <LogStatusIndicator 
-                                key={daysAgo} 
-                                status={daysAgo === 0 ? 'pending' : 'missed'}
-                                date={date} 
-                              />
-                            );
-                          })
-                        )}
+                      <div className="flex items-center space-x-1">
+                        {[0, 1, 2, 3].map((daysAgo) => {
+                          const targetDate = new Date();
+                          targetDate.setHours(0, 0, 0, 0); // S'assurer que l'heure est à minuit
+                          targetDate.setDate(targetDate.getDate() - daysAgo);
+                          
+                          // Log pour déboguer
+                          console.log(`\n--- Jour ${daysAgo} ---`);
+                          console.log('Date cible:', targetDate.toISOString().split('T')[0]);
+                          console.log('Tous les logs du client:', client.logs.map(l => ({
+                            date: l.date?.toISOString?.()?.split('T')[0],
+                            status: l.status,
+                            isDateValid: l.date instanceof Date && !isNaN(l.date.getTime())
+                          })));
+                          
+                          // Trouver le log correspondant à cette date
+                          const logForDate = client.logs.find(log => {
+                            if (!log?.date) {
+                              console.log('Log sans date:', log);
+                              return false;
+                            }
+                            if (!(log.date instanceof Date) || isNaN(log.date.getTime())) {
+                              console.log('Date invalide dans le log:', log);
+                              return false;
+                            }
+                            
+                            const logDate = new Date(log.date);
+                            logDate.setHours(0, 0, 0, 0); // Normaliser l'heure à minuit
+                            
+                            const isMatch = 
+                              logDate.getDate() === targetDate.getDate() &&
+                              logDate.getMonth() === targetDate.getMonth() &&
+                              logDate.getFullYear() === targetDate.getFullYear();
+                            
+                            console.log('Comparaison avec log:', {
+                              logDate: logDate.toISOString(),
+                              logDateLocal: logDate.toLocaleDateString('fr-FR'),
+                              targetDate: targetDate.toISOString(),
+                              targetDateLocal: targetDate.toLocaleDateString('fr-FR'),
+                              isMatch,
+                              logStatus: log.status,
+                              daysAgo
+                            });
+                            
+                            return isMatch;
+                          });
+                          
+                          console.log(`Résultat pour ${targetDate.toLocaleDateString('fr-FR')}:`, logForDate ? 'Trouvé' : 'Non trouvé');
+                          
+                          return (
+                            <LogStatusIndicator 
+                              key={daysAgo}
+                              status={logForDate ? logForDate.status : (daysAgo === 0 ? 'pending' : 'missed')}
+                              date={targetDate}
+                            />
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

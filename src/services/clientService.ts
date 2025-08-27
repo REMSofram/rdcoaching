@@ -6,16 +6,17 @@ export interface ClientProfile {
   email: string;
   first_name: string;
   last_name: string;
-  birth_date?: string;
-  height?: number;
-  phone?: string;
-  starting_weight?: number;
-  current_weight?: number;
-  sports_practiced?: string | string[];
-  objectives?: string;
-  injuries?: string | string[];
+  birth_date?: string | null;
+  height?: number | null;
+  phone?: string | null;
+  starting_weight?: number | null;
+  current_weight?: number | null;
+  sports_practiced?: string | string[] | null;
+  objectives?: string | null;
+  injuries?: string | string[] | null;
   created_at: string;
   updated_at: string;
+  [key: string]: unknown; // Pour les propriétés supplémentaires
 }
 
 export const fetchClients = async (): Promise<ClientProfile[]> => {
@@ -102,9 +103,17 @@ export interface DailyLog {
 }
 
 // Interface pour le résultat de fetchClientLogs qui inclut le dernier poids
-export interface ClientLogsResult extends Array<DailyLog> {
+export type ClientLogsResult = Array<{
+  id: string;
+  client_id: string;
+  log_date: string;
+  date: Date;
+  status: 'completed' | 'pending' | 'missed';
+  weight?: number;
+  [key: string]: unknown;
+}> & {
   lastWeight?: number;
-}
+};
 
 export const fetchClientLogs = async (clientId: string): Promise<ClientLogsResult> => {
   try {
@@ -124,20 +133,20 @@ export const fetchClientLogs = async (clientId: string): Promise<ClientLogsResul
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Créer un tableau pour les 3 derniers jours (aujourd'hui, hier, avant-hier)
-    const lastThreeDays = [];
-    for (let i = 0; i < 3; i++) {
+    // Créer un tableau pour les 4 derniers jours (aujourd'hui et les 3 jours précédents)
+    const lastFourDays = [];
+    for (let i = 0; i < 4; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      lastThreeDays.push(date);
+      lastFourDays.push(date);
     }
 
-    // Récupérer les logs pour ces 3 jours
+    // Récupérer les logs pour ces 4 jours
     const { data: recentLogs, error } = await supabase
       .from('daily_logs')
       .select('*')
       .eq('client_id', clientId)
-      .in('log_date', lastThreeDays.map(d => formatDate(d)))
+      .in('log_date', lastFourDays.map(d => formatDate(d)))
       .order('log_date', { ascending: false });
 
     if (error) throw error;
@@ -148,7 +157,7 @@ export const fetchClientLogs = async (clientId: string): Promise<ClientLogsResul
     );
 
     // Générer le statut pour chaque jour
-    const result = lastThreeDays.map(date => {
+    const result = lastFourDays.map(date => {
       const dateStr = formatDate(date);
       const log = logsByDate.get(dateStr);
       const todayStr = formatDate(today);
@@ -228,7 +237,8 @@ export const updateClientProfile = async (clientId: string, updates: TablesUpdat
     ];
 
     fieldsToUpdate.forEach(field => {
-      const value = updates[field as keyof ClientProfile];
+      // Utiliser une assertion de type plus précise pour accéder aux propriétés
+      const value = (updates as Record<string, unknown>)[field];
       
       // Gestion spéciale pour la date de naissance
       if (field === 'birth_date' && value) {
