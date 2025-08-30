@@ -13,7 +13,7 @@ export interface DailyLog {
   log_date: string; // Format: YYYY-MM-DD
   training_done?: boolean;
   training_type?: string;
-  plaisir_seance?: number; // 1-5
+  plaisir_seance?: number | null; // 1-5 ou null
   updated_at?: string;
 }
 

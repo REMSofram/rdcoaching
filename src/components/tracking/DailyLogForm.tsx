@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
+import { supabase } from '@/lib/supabase';
 import { DailyLog, createDailyLog, getLogByDate, updateDailyLog } from '@/services/dailyLogService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/shared/Input';
@@ -12,6 +13,13 @@ import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { RatingButtons } from '@/components/ui/RatingButtons';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function DailyLogForm() {
   const { user } = useAuth();
@@ -36,6 +44,48 @@ export default function DailyLogForm() {
     notes: ''
   });
   const [existingLogId, setExistingLogId] = useState<string | null>(null);
+  const [trainingSessions, setTrainingSessions] = useState<string[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [showCustomTraining, setShowCustomTraining] = useState(false);
+
+  // Charger les séances d'entraînement de l'utilisateur
+  const fetchTrainingSessions = async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingSessions(true);
+    try {
+      // Récupérer le token de session actuel
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Aucune session active');
+      }
+      
+      const response = await fetch('/api/user-training-sessions', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur lors du chargement des séances');
+      }
+      
+      const data = await response.json();
+      setTrainingSessions(data);
+    } catch (error: any) {
+      console.error('Erreur:', error);
+      showNotification(`Erreur: ${error?.message || 'Impossible de charger les séances d\'entraînement'}`);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  // Charger les séances au montage du composant
+  useEffect(() => {
+    fetchTrainingSessions();
+  }, [user?.id]);
 
   // Fonction pour charger le log d'une date spécifique
   const loadLogForDate = async (date: string) => {
@@ -160,7 +210,10 @@ export default function DailyLogForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id) return;
+    if (!user?.id) {
+      showNotification('Erreur: Utilisateur non connecté');
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -172,15 +225,25 @@ export default function DailyLogForm() {
         training_done: !!formData.training_done,
         // Ne pas inclure les champs d'entraînement si pas d'entraînement
         ...(!formData.training_done && {
-          training_type: undefined,
-          plaisir_seance: undefined
+          training_type: '',
+          plaisir_seance: null
         })
       };
+
+      console.log('Données à soumettre:', dataToSubmit);
       
+      let result;
       if (existingLogId) {
-        await updateDailyLog(existingLogId, dataToSubmit);
+        console.log('Mise à jour du log existant:', existingLogId);
+        result = await updateDailyLog(existingLogId, dataToSubmit);
       } else {
-        await createDailyLog(dataToSubmit);
+        console.log('Création d\'un nouveau log');
+        result = await createDailyLog(dataToSubmit);
+      }
+
+      if (result.error) {
+        console.error('Erreur lors de la sauvegarde:', result.error);
+        throw result.error;
       }
       
       // Afficher la notification et rediriger
@@ -189,6 +252,8 @@ export default function DailyLogForm() {
       
     } catch (error) {
       console.error('Error saving daily log:', error);
+      showNotification('Erreur lors de la sauvegarde du suivi. Veuillez réessayer.');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -262,18 +327,20 @@ export default function DailyLogForm() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Appétit</label>
-            <select
-              name="appetite"
+            <Select
               value={formData.appetite ?? ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onValueChange={(value) => setFormData(prev => ({ ...prev, appetite: value as 'faible' | 'moyen' | 'élevé' }))}
               required
             >
-              <option value="">Sélectionnez...</option>
-              <option value="faible">Faible</option>
-              <option value="moyen">Moyen</option>
-              <option value="élevé">Élevé</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="faible">Faible</SelectItem>
+                <SelectItem value="moyen">Moyen</SelectItem>
+                <SelectItem value="élevé">Élevé</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
@@ -303,17 +370,56 @@ export default function DailyLogForm() {
             </div>
             
             {showTrainingFields && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type d&apos;entraînement</label>
-                  <Input
-                    type="text"
-                    name="training_type"
-                    value={formData.training_type}
-                    onChange={handleChange}
-                    placeholder="Ex: Musculation, Cardio..."
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type d'entraînement</label>
+                  <div className="space-y-2">
+                    <Select
+                      value={showCustomTraining ? 'custom' : formData.training_type || ''}
+                      onValueChange={(value) => {
+                        if (value === 'custom') {
+                          setShowCustomTraining(true);
+                          setFormData(prev => ({ ...prev, training_type: '' }));
+                        } else {
+                          setShowCustomTraining(false);
+                          setFormData(prev => ({ ...prev, training_type: value }));
+                        }
+                      }}
+                      disabled={!formData.training_done || isLoadingSessions}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une séance" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {isLoadingSessions ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (
+                          <>
+                            {trainingSessions.map((session) => (
+                              <SelectItem key={session} value={session}>
+                                {session}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="custom">
+                              Autre
+                            </SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    
+                    {showCustomTraining && (
+                      <Input
+                        placeholder="Décrivez votre entraînement"
+                        value={formData.training_type || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, training_type: e.target.value }))}
+                        disabled={!formData.training_done}
+                        className="mt-2"
+                      />
+                    )}
+                  </div>
                 </div>
                 
                 <div>

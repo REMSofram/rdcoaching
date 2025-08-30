@@ -81,11 +81,21 @@ export const updateProgram = async (
     // S'assurer que days_data est bien un tableau JSON
     const daysArray = Array.isArray(updates.days) ? updates.days : [updates.days];
     
+    // Nettoyer les IDs temporaires des jours
+    const cleanedDays = daysArray.map(day => {
+      const dayCopy = { ...day };
+      // Si l'ID commence par 'temp-', on le met à null pour que la base de données génère un nouvel ID
+      if (dayCopy.id && typeof dayCopy.id === 'string' && dayCopy.id.startsWith('temp-')) {
+        delete dayCopy.id;
+      }
+      return dayCopy;
+    });
+    
     // L'ordre et le type des paramètres doivent correspondre exactement à la définition de la fonction PostgreSQL
     const { data, error } = await supabase.rpc('update_program_with_days', {
       program_id_param: programId,
       program_data: programUpdates,
-      days_data: daysArray
+      days_data: cleanedDays
     });
 
     if (error) {
