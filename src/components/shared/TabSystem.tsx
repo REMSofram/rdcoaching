@@ -2,9 +2,10 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { ProgramDayInput } from '@/types/Program';
 import { cn } from '@/lib/utils';
+import { RichTextEditor } from './editor';
+import { RichTextViewer } from './RichTextViewer';
 
 // Styles pour masquer la barre de défilement
 const scrollbarHideStyles = {
@@ -324,29 +325,28 @@ export const TabSystem: React.FC<TabSystemProps> = ({
                     />
                   </div>
                   <div>
-                    <label htmlFor={`day-content-${index}`} className="text-sm font-medium mb-1 block">
+                    <label className="text-sm font-medium mb-1 block">
                       Contenu du jour
                     </label>
-                    <Textarea
-                      id={`day-content-${index}`}
+                    <RichTextEditor
                       value={day.content}
-                      onChange={(e) => handleDayChange(index, 'content', e.target.value)}
-                      className="min-h-[300px] w-full"
-                      placeholder={
-                        readOnly 
-                          ? 'Aucun contenu pour ce jour.' 
-                          : dayType === 'nutrition'
-                            ? 'Détaillez vos repas et collations...\nExemple :\n## Petit-déjeuner\n- Omelette aux épinards et avocat\n- Pain complet\n- Thé vert\n\n## Déjeuner\n- Poulet grillé\n- Quinoa et légumes grillés\n- Yaourt nature'
-                            : 'Détaillez les exercices, séries, répétitions...\nExemple :\n- Développé couché : 4x8-12\n- Écarté couché : 3x12-15'
-                      }
+                      onChange={(content) => handleDayChange(index, 'content', content)}
+                      placeholder="Décrivez les exercices de ce jour..."
                       readOnly={readOnly}
+                      className="mt-2"
                     />
                   </div>
                 </>
               ) : (
                 <div className="prose max-w-none">
-                  <h3 className="text-xl font-semibold mb-4">{day.day_title || `Jour ${index + 1}`}</h3>
-                  <div className="whitespace-pre-wrap">{day.content || 'Aucun contenu pour ce jour.'}</div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">
+                    {day.day_title || `Jour ${index + 1}`}
+                  </h2>
+                  {day.content ? (
+                    <RichTextViewer content={day.content} />
+                  ) : (
+                    <div className="text-gray-500 italic">Aucun contenu pour ce jour.</div>
+                  )}
                 </div>
               )}
             </div>

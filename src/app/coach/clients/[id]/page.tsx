@@ -66,6 +66,7 @@ import type { TablesUpdate } from '@/types/database.types';
 type UserProfile = ClientProfile;
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
 import { LogHistory } from '@/components/tracking/LogHistory';
+import { RichTextViewer } from '@/components/shared/RichTextViewer';
 
 export default function ClientProfilePage({
   params,
@@ -873,21 +874,23 @@ export default function ClientProfilePage({
                         .sort((a, b) => (a.day_order || 0) - (b.day_order || 0))
                         .map((day) => (
                           <TabsContent key={day.id} value={day.id} className="mt-0">
-                            <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg">
-                              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                            <div className="prose max-w-none">
+                              <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">
                                 {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
-                              </h3>
-                              <div className="whitespace-pre-line">
-                                {day.content || 'Aucun contenu défini pour ce jour.'}
-                              </div>
+                              </h2>
+                              {day.content ? (
+                                <RichTextViewer content={day.content} />
+                              ) : (
+                                <div className="text-gray-500 italic">Aucun contenu pour ce jour.</div>
+                              )}
                             </div>
                           </TabsContent>
                         ))}
                     </Tabs>
                   </div>
                 ) : (
-                  <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
-                    Aucun contenu de programme disponible.
+                  <div className="prose max-w-none">
+                    <div className="text-gray-500 italic">Aucun contenu de programme disponible.</div>
                   </div>
                 )}
               </div>
@@ -979,21 +982,23 @@ export default function ClientProfilePage({
                         .sort((a: { day_order?: number }, b: { day_order?: number }) => (a.day_order || 0) - (b.day_order || 0))
                         .map((day: { id: string; day_order?: number; day_title?: string; content?: string }) => (
                           <TabsContent key={day.id} value={day.id} className="mt-0">
-                            <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg">
-                              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                            <div className="prose max-w-none">
+                              <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">
                                 {day.day_title || `Jour ${(day.day_order || 0) + 1}`}
-                              </h3>
-                              <div className="whitespace-pre-line">
-                                {day.content || 'Aucun contenu défini pour ce jour.'}
-                              </div>
+                              </h2>
+                              {day.content ? (
+                                <RichTextViewer content={day.content} />
+                              ) : (
+                                <div className="text-gray-500 italic">Aucun contenu pour ce jour.</div>
+                              )}
                             </div>
                           </TabsContent>
                         ))}
                     </Tabs>
                   </div>
                 ) : (
-                  <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">
-                    Aucun contenu de programme nutritionnel disponible.
+                  <div className="prose max-w-none">
+                    <div className="text-gray-500 italic">Aucun contenu de programme nutritionnel disponible.</div>
                   </div>
                 )}
               </div>
