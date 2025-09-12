@@ -1,9 +1,10 @@
 'use client';
 
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
+import Heading from '@tiptap/extension-heading';
 import { useEffect, useState, useRef } from 'react';
 import { useClickAway } from 'react-use';
 
@@ -49,13 +50,20 @@ export const TipTapEditor = ({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Désactive les extensions qui sont redéfinies ci-dessous
+        // Configuration de base
         link: false,
         underline: false,
+        // Configuration des titres
         heading: {
           levels: [1, 2],
           HTMLAttributes: {
             class: 'my-2',
+          },
+        },
+        // Configuration des paragraphes
+        paragraph: {
+          HTMLAttributes: {
+            class: 'mb-4',
           },
         },
       }),
@@ -83,6 +91,17 @@ export const TipTapEditor = ({
       attributes: {
         class: 'min-h-[200px] p-4 focus:outline-none prose max-w-none',
         'data-placeholder': placeholder,
+      },
+      // Gestion précise des sélections
+      handleClick: (view, pos, event) => {
+        // Force une mise à jour du format sélectionné
+        setTimeout(() => {
+          if (editor) {
+            // Force la mise à jour de l'UI
+            editor.commands.focus();
+          }
+        }, 0);
+        return false;
       },
     },
     // Désactive le rendu immédiat pour éviter les problèmes d'hydratation SSR
@@ -113,12 +132,39 @@ export const TipTapEditor = ({
     return null;
   }
 
-  // Fonction pour obtenir le niveau de titre actuel
-  const getCurrentHeadingLevel = (editor: Editor | null): string => {
+  // Fonction pour obtenir le type de formatage actuel
+  const getCurrentFormat = (editor: Editor | null): string => {
     if (!editor) return 'paragraph';
+    
+    // Vérifie d'abord si du texte est sélectionné
+    const { from, to } = editor.state.selection;
+    if (from === to) return 'paragraph';
+    
+    // Vérifie le formatage du texte sélectionné
     if (editor.isActive('heading', { level: 1 })) return 'h1';
     if (editor.isActive('heading', { level: 2 })) return 'h2';
+    
+    // Si aucun formatage spécifique, retourne 'paragraph' pour le texte normal
     return 'paragraph';
+  };
+
+  // Fonction pour définir le format de texte
+  const setFormat = (format: string) => {
+    if (!editor) return;
+    
+    // Sauvegarde la sélection actuelle
+    const { from, to } = editor.state.selection;
+    
+    // Applique le format uniquement si du texte est sélectionné
+    if (from !== to) {
+      if (format === 'h1') {
+        editor.chain().focus().setHeading({ level: 1 }).run();
+      } else if (format === 'h2') {
+        editor.chain().focus().setHeading({ level: 2 }).run();
+      } else {
+        editor.chain().focus().setParagraph().run();
+      }
+    }
   };
 
   // Fonction pour gérer l'ajout de lien
@@ -165,16 +211,10 @@ export const TipTapEditor = ({
         <div className="border-b border-gray-200 p-2">
           <div className="flex flex-wrap gap-1">
             <select
-              value={getCurrentHeadingLevel(editor)}
+              value={getCurrentFormat(editor)}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value === 'paragraph') {
-                  editor.chain().focus().setParagraph().run();
-                } else if (value === 'h1') {
-                  editor.chain().focus().toggleHeading({ level: 1 }).run();
-                } else if (value === 'h2') {
-                  editor.chain().focus().toggleHeading({ level: 2 }).run();
-                }
+                setFormat(value);
               }}
               className="rounded border border-gray-300 p-1 text-sm"
               title="Titre"
