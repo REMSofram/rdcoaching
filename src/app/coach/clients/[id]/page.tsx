@@ -65,8 +65,8 @@ import type { TablesUpdate } from '@/types/database.types';
 
 type UserProfile = ClientProfile;
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
-import { LogHistory } from '@/components/tracking/LogHistory';
 import { RichTextViewer } from '@/components/shared/RichTextViewer';
+import { LogsAndChartTabs } from '@/components/tracking/LogsAndChartTabs';
 
 export default function ClientProfilePage({
   params,
@@ -805,7 +805,10 @@ export default function ClientProfilePage({
           </div>
           
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <LogHistory clientId={clientId} />
+            <LogsAndChartTabs 
+              clientId={clientId} 
+              clientName={`${profile.first_name} ${profile.last_name}`} 
+            />
           </div>
         </TabsContent>
 

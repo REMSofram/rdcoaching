@@ -1,10 +1,18 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { DailyLogButton } from '@/components/ui/DailyLogButton';
-import { LogHistory } from '@/components/tracking/LogHistory';
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
+import { LogsAndChartTabs } from '@/components/tracking/LogsAndChartTabs';
 
 export default function SuiviPage() {
+  const { user } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -26,7 +34,12 @@ export default function SuiviPage() {
         </section>
         
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <LogHistory />
+          {isClient && user && (
+            <LogsAndChartTabs 
+              clientId={user.id}
+              clientName="Vos"
+            />
+          )}
         </div>
       </div>
     </div>

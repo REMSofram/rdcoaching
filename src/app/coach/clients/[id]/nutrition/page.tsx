@@ -13,8 +13,9 @@ import {
 import { NutritionProgram, NutritionDayInput } from '@/types/Nutrition';
 import { ProgramDay } from '@/types/Program';
 import { TabSystem } from '@/components/shared/TabSystem';
+import { CombinedChart } from '@/components/shared/charts';
 import { Button } from '@/components/ui/button';
-import { Trash2, Save, Plus, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, Save, Plus, Loader2, AlertTriangle, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 

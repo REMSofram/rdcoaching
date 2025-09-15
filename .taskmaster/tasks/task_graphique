@@ -1,0 +1,344 @@
+# 📊 Task Graphique - Spécifications Techniques
+## Application de Suivi Sportif RD Coaching
+
+---
+
+## 🎯 Vue d'ensemble
+
+Implémentation d'un graphique combiné pour le suivi des indicateurs clients avec contrôles interactifs et adaptation responsive selon la période sélectionnée.
+
+---
+
+## 📋 Structure des Données
+
+### Format des données d'entrée
+```javascript
+const dataPoint = {
+  date: '12/09',                    // Format court pour affichage
+  dateLabel: 'vendredi 12 septembre 2025', // Format complet pour tooltip
+  poids: 70.6,                      // Poids en kg (décimal)
+  sommeil: 6,                       // Score sommeil sur 10 ⚠️
+  energie: 2,                       // Score énergie sur 5
+  appetit: 3,                       // Score appétit sur 5
+  sommeilConverti: 3                // Conversion automatique sommeil/2 pour affichage
+}
+```
+
+### ⚠️ Conversion Automatique Sommeil
+- **Données source** : Sommeil noté sur `/10`
+- **Affichage graphique** : Converti automatiquement sur `/5` (division par 2)
+- **Tooltip** : Affiche les deux valeurs `8/10 (4/5)`
+
+---
+
+## 🎨 Design & Styles
+
+### Couleurs des Indicateurs
+```css
+Poids:    #2563eb (bleu)
+Sommeil:  #16a34a (vert)  
+Énergie:  #f59e0b (jaune/orange)
+Appétit:  #ef4444 (rouge)
+```
+
+### Types de Lignes
+- **Poids** : Ligne pleine épaisse (`strokeWidth: 3`)
+- **Bien-être** : Lignes pointillées (`strokeDasharray: "6 4"`, `strokeWidth: 2`)
+
+### Points sur les Courbes
+- **Vue 1 Semaine** : Points visibles sur toutes les courbes
+- **Vue 1 Mois & 3 Mois** : Points masqués (`dot: false`) pour fluidité
+
+---
+
+## 📊 Configuration du Graphique
+
+### Axes
+```javascript
+// Axe Y Gauche - Poids
+yAxisId: "poids"
+orientation: "left" 
+domain: ['dataMin - 0.5', 'dataMax + 0.5']
+label: 'Poids (kg)'
+
+// Axe Y Droit - Bien-être  
+yAxisId: "wellbeing"
+orientation: "right"
+domain: [0, 5]
+label: 'Bien-être (/5)'
+```
+
+### Axe X - Gestion des Dates
+```javascript
+// Espacement intelligent selon la période
+interval: {
+  'week': 0,                              // Toutes les dates
+  'month': Math.floor(data.length / 6),   // 1 sur 6
+  '3months': Math.floor(data.length / 8)  // 1 sur 8
+}
+```
+
+### Grille
+```javascript
+strokeOpacity: {
+  'week': 1,      // Grille normale
+  'month': 0.5,   // Grille discrète  
+  '3months': 0.5  // Grille discrète
+}
+```
+
+---
+
+## 🎛️ Contrôles Interactifs
+
+### Sélection Temporelle
+3 boutons exclusifs :
+- **1 Semaine** (défaut)
+- **1 Mois** 
+- **3 Mois**
+
+### Contrôles de Visibilité des Métriques
+4 boutons toggle indépendants à droite du titre :
+
+```javascript
+const [visibleMetrics, setVisibleMetrics] = useState({
+  poids: true,
+  sommeil: true, 
+  energie: true,
+  appetit: true
+});
+```
+
+#### Style des Boutons
+- **Actif** : `bg-{color}-100 text-{color}-700 border border-{color}-200`
+- **Inactif** : `bg-gray-100 text-gray-500 border border-gray-200`
+- **Indicateur visuel** : Petite ligne dans le bouton avec style de courbe correspondant
+
+---
+
+## 🔍 Tooltip Personnalisé
+
+### Contenu Affiché
+```javascript
+// Structure du tooltip
+{
+  dateLabel: "vendredi 12 septembre 2025",
+  metrics: [
+    { name: "Poids", value: "70.6 kg" },
+    { name: "Sommeil", value: "6/10 (3/5)" }, // Double affichage
+    { name: "Énergie", value: "2/5" },
+    { name: "Appétit", value: "3/5" }
+  ]
+}
+```
+
+### Style
+- Fond blanc avec bordure grise
+- Ombre portée (`shadow-lg`)
+- Largeur minimale : `min-w-48`
+- Couleurs des valeurs correspondent aux couleurs des courbes
+
+---
+
+## 📈 Gestion des Données par Période
+
+### Sources de Données
+```javascript
+getData() {
+  switch(timeRange) {
+    case 'week': return sampleData;           // 9 derniers jours
+    case 'month': return monthData.slice(-30); // 30 derniers jours  
+    case '3months': return threeMonthsData.slice(-90); // 90 derniers jours
+  }
+}
+```
+
+---
+
+## 📊 Résumé des Moyennes
+
+### Cartes de Statistiques
+4 cartes en bas du graphique avec :
+- **Icône** représentative de chaque métrique
+- **Valeur moyenne** calculée dynamiquement
+- **Couleur de fond** correspondant à l'indicateur
+- **Sommeil affiché** dans son format original `/10`
+
+```javascript
+// Calculs automatiques
+avgPoids = (data.reduce((sum, d) => sum + d.poids, 0) / data.length).toFixed(1);
+avgSommeil = (data.reduce((sum, d) => sum + d.sommeil, 0) / data.length).toFixed(1);
+```
+
+---
+
+## 🎯 Comportement Responsive
+
+### Breakpoints
+- **Mobile** : Graphique en pleine largeur
+- **Desktop** : Maximum `max-w-6xl mx-auto`
+- **Contrôles** : Stack vertical sur mobile
+
+### Dimensions
+- **Hauteur graphique** : `450px`
+- **Marges** : `{ top: 20, right: 50, left: 20, bottom: 20 }`
+
+---
+
+## ⚡ Fonctionnalités Interactives
+
+### Au Survol
+- **activeDot** : Point agrandi et bordé blanc
+- **Tooltip** : Apparition avec animation
+
+### Clics
+- **Boutons période** : Changement des données et re-render
+- **Boutons métriques** : Toggle immédiat de visibilité des courbes
+
+---
+
+## 🛠️ Stack Technique
+
+### Librairies Requises
+
+#### 🔴 Installation Obligatoire
+```bash
+npm install recharts
+# ou
+yarn add recharts
+```
+
+#### 🟡 Installation Optionnelle  
+```bash
+npm install lucide-react
+# ou  
+yarn add lucide-react
+```
+*Pour les icônes (TrendingUp, Weight, Battery). Peut être remplacé par vos icônes existantes.*
+
+#### ✅ Déjà Disponible dans le Projet
+- **React** (inclus avec Next.js)
+- **TypeScript** (déjà configuré) 
+- **Tailwind CSS** (pour tous les styles)
+
+### Composants Recharts Utilisés
+- `LineChart`
+- `Line` 
+- `XAxis`, `YAxis`
+- `CartesianGrid`
+- `Tooltip`
+- `ResponsiveContainer`
+- `Legend`
+
+---
+
+## 📝 Checklist d'Implémentation
+
+### ✅ Structure de Base
+- [ ] Configuration du composant avec états
+- [ ] Gestion des données par période
+- [ ] Conversion automatique sommeil (/10 → /5)
+
+### ✅ Graphique Principal
+- [ ] Double axes Y (poids gauche, bien-être droite)
+- [ ] 4 courbes avec styles différenciés
+- [ ] Points conditionnels selon la période
+- [ ] Grille adaptative
+
+### ✅ Contrôles Interactifs  
+- [ ] 3 boutons de sélection temporelle
+- [ ] 4 boutons toggle de visibilité
+- [ ] Styles actif/inactif des boutons
+
+### ✅ Tooltip Avancé
+- [ ] Affichage de la date complète
+- [ ] Valeurs formatées par métrique
+- [ ] Couleurs correspondantes
+
+### ✅ Interface Utilisateur
+- [ ] Cartes de moyennes calculées
+- [ ] Responsive design
+- [ ] États de hover et transitions
+
+### ✅ Optimisations Visuelles
+- [ ] Espacement intelligent des dates
+- [ ] Opacité adaptative de la grille
+- [ ] Légendes et labels clairs
+
+---
+
+## 🎨 Exemple d'Intégration
+
+### Structure Complète du Composant Principal
+```jsx
+// SuiviTabs.tsx - Composant principal avec onglets
+export default function SuiviTabs({ clientData, clientName }) {
+  const [activeTab, setActiveTab] = useState('historique');
+
+  return (
+    <div className="w-full">
+      {/* Navigation des onglets */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('historique')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'historique' 
+                ? 'border-blue-500 text-blue-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Historique des enregistrements
+          </button>
+          <button
+            onClick={() => setActiveTab('graphique')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'graphique' 
+                ? 'border-blue-500 text-blue-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Graphique
+          </button>
+        </nav>
+      </div>
+
+      {/* Contenu des onglets */}
+      <div className="mt-6">
+        {activeTab === 'historique' && <HistoriqueTable data={clientData} />}
+        {activeTab === 'graphique' && <CombinedChart data={clientData} clientName={clientName} />}
+      </div>
+    </div>
+  );
+}
+```
+
+### Utilisation dans la Page Client
+```jsx
+// Dans la page de suivi du client
+<SuiviTabs 
+  clientData={clientTrackingData}
+  clientName="Maxime Schweiger"
+/>
+```
+
+---
+
+## 📋 Notes d'Implémentation
+
+### ⚠️ Points d'Attention
+1. **Conversion sommeil** : Toujours diviser par 2 pour l'affichage graphique
+2. **Gestion des données manquantes** : Prévoir des valeurs par défaut
+3. **Performance** : Limiter les re-renders lors des toggles
+4. **Accessibilité** : Labels appropriés pour les boutons
+
+### 🔧 Personnalisations Possibles
+- Ajouter d'autres périodes (6 mois, 1 an)
+- Exporter les graphiques en image
+- Ajouter des seuils d'alerte visuels
+- Annotations sur des dates spécifiques
+
+---
+
+*📅 Dernière mise à jour : 13 septembre 2025*  
+*🎯 Version : 1.0 - Spécifications complètes pour implémentation*
