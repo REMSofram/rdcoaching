@@ -72,7 +72,7 @@ export const getClientTrackingData = async (clientId: string, period: 'week' | '
         dateLabel,
         poids: log.weight || null,
         sommeil: log.sleep_hours || null,
-        energie: log.energy_level ? log.energy_level * 2 : null, // Convertir de 1-5 à 2-10
+        energie: log.energy_level || null, // Conserver l'échelle 1-5
         appetit: appetitValue,
       };
     });

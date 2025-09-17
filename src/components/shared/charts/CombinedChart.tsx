@@ -390,6 +390,84 @@ const CombinedChart = (props: CombinedChartProps) => {
   // Vérifier s'il y a au moins une métrique visible
   const hasVisibleMetrics = Object.values(visibleMetrics).some(visible => visible);
 
+  // Calculer les indicateurs de performance
+  const performanceIndicators = useMemo(() => {
+    if (filteredData.length < 2) return null;
+
+    // Trier les données par date
+    const sortedData = [...filteredData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+    const poidsData = sortedData.filter(item => item.poids !== null && item.poids !== undefined);
+    
+    if (poidsData.length < 2) return null;
+
+    // Calculer l'évolution du poids
+    const firstPoids = parseFloat(poidsData[0].poids as any);
+    const lastPoids = parseFloat(poidsData[poidsData.length - 1].poids as any);
+    const evolution = lastPoids - firstPoids;
+    const evolutionFormatted = evolution > 0 ? `+${evolution.toFixed(1)}` : evolution.toFixed(1);
+    
+    // Calculer la vitesse (kg/semaine)
+    const firstDate = parseDate(poidsData[0].date);
+    const lastDate = parseDate(poidsData[poidsData.length - 1].date);
+    const daysDiff = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+    const weeksDiff = daysDiff / 7;
+    const speed = weeksDiff > 0 ? evolution / weeksDiff : 0;
+    const speedFormatted = speed > 0 ? `+${speed.toFixed(2)}` : speed.toFixed(2);
+    
+    // Déterminer la tendance
+    const trend = evolution > 0 ? '↑ Hausse' : evolution < 0 ? '↓ Baisse' : '→ Stable';
+    const trendColor = evolution > 0 ? 'text-red-500' : evolution < 0 ? 'text-green-500' : 'text-gray-500';
+    
+    // Calculer la consistance (jours de suivi / jours totaux)
+    const totalDays = daysDiff + 1; // +1 pour inclure le premier jour
+    const consistency = Math.round((poidsData.length / totalDays) * 100);
+    let consistencyText = 'Faible';
+    let consistencyColor = 'text-red-500';
+    
+    if (consistency > 80) {
+      consistencyText = 'Excellente';
+      consistencyColor = 'text-green-500';
+    } else if (consistency > 50) {
+      consistencyText = 'Bonne';
+      consistencyColor = 'text-yellow-500';
+    } else if (consistency > 30) {
+      consistencyText = 'Moyenne';
+      consistencyColor = 'text-orange-500';
+    }
+    
+    // Calculer le nombre de jours attendus dans la période
+    let expectedDays = 0;
+    const daysInPeriod = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90;
+    expectedDays = Math.min(daysDiff + 1, daysInPeriod);
+    
+    // Calculer le nombre de logs remplis (au moins une donnée de poids)
+    const filledLogs = filteredData.filter(item => item.poids !== null && item.poids !== undefined).length;
+    
+    return {
+      evolution: { 
+        value: evolutionFormatted, 
+        unit: 'kg',
+        description: `(${firstPoids.toFixed(1)}kg → ${lastPoids.toFixed(1)}kg)`
+      },
+      speed: { 
+        value: speedFormatted, 
+        unit: 'kg/sem',
+        description: `sur ${weeksDiff.toFixed(1)} semaines`
+      },
+      trend: { 
+        value: trend, 
+        color: trendColor,
+        description: `(tendance du poids)`
+      },
+      consistency: { 
+        value: `${filledLogs}/${expectedDays}`, 
+        text: `${consistency}% de suivi`,
+        color: consistencyColor,
+        description: '(logs remplis / jours dans la période)'
+      }
+    };
+  }, [filteredData]);
+
   return (
     <div className={cn('w-full p-4 md:p-6 space-y-4 md:space-y-6 bg-white rounded-lg shadow-sm border border-gray-200', className)}>
       {/* En-tête avec titre et contrôles */}
@@ -536,13 +614,14 @@ const CombinedChart = (props: CombinedChartProps) => {
                   <YAxis
                     yAxisId="wellbeing"
                     orientation="right"
-                    domain={[0, 5]}
+                    domain={[0, 10]}  // Échelle fixe de 0 à 10
+                    ticks={[0, 2, 4, 6, 8, 10]}  // Affichage des ticks tous les 2 points
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 500 }}
                     width={35}
                     label={{
-                      value: '/5',
+                      value: '/10',
                       angle: 90,
                       position: 'insideRight',
                       offset: 5,
@@ -588,6 +667,63 @@ const CombinedChart = (props: CombinedChartProps) => {
                   })}
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+          )}
+          
+          {/* Indicateurs de performance */}
+          {performanceIndicators && hasData && (
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Évolution */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Évolution</p>
+                <p className="text-lg font-semibold">
+                  {performanceIndicators.evolution.value} 
+                  <span className="text-sm text-gray-500 ml-1">{performanceIndicators.evolution.unit}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {performanceIndicators.evolution.description}
+                </p>
+              </div>
+              
+              {/* Vitesse */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Vitesse</p>
+                <p className="text-lg font-semibold">
+                  {performanceIndicators.speed.value} 
+                  <span className="text-sm text-gray-500 ml-1">{performanceIndicators.speed.unit}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {performanceIndicators.speed.description}
+                </p>
+              </div>
+              
+              {/* Tendance */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Tendance</p>
+                <p className={`text-lg font-semibold ${performanceIndicators.trend.color}`}>
+                  {performanceIndicators.trend.value}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {performanceIndicators.trend.description}
+                </p>
+              </div>
+              
+              {/* Consistance */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Consistance</p>
+                <div>
+                  <p className="text-lg font-semibold">
+                    {performanceIndicators.consistency.value}
+                    <span className="text-sm text-gray-500 ml-1">jours</span>
+                  </p>
+                  <p className={`text-xs ${performanceIndicators.consistency.color}`}>
+                    {performanceIndicators.consistency.text}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {performanceIndicators.consistency.description}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

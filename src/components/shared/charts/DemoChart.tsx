@@ -63,7 +63,7 @@ export function DemoChart({
 
   // Afficher tous les contrôles même s'il n'y a pas de données
   return (
-    <div className="h-[600px]">
+    <div className="min-h-[600px]">
       <div className="mb-4">
         <div className="inline-flex rounded-md shadow-sm" role="group">
           {[
