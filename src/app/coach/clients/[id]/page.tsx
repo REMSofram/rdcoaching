@@ -42,7 +42,7 @@ const validateFormData = (formData: Partial<UserProfile>): string | null => {
 };
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare, Calendar, Plus } from 'lucide-react';
+import { Utensils, Activity, ArrowLeft, Info, Loader2, XCircle, Dumbbell, ActivitySquare, Calendar, Plus, FileText } from 'lucide-react';
 import { UpcomingSessions } from '@/components/shared/calendar/UpcomingSessions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -67,6 +67,7 @@ type UserProfile = ClientProfile;
 import { MetricsSummary } from '@/components/tracking/MetricsSummary';
 import { RichTextViewer } from '@/components/shared/RichTextViewer';
 import { LogsAndChartTabs } from '@/components/tracking/LogsAndChartTabs';
+import { ClientNotes } from '@/components/client/ClientNotes';
 
 export default function ClientProfilePage({
   params,
@@ -766,7 +767,7 @@ export default function ClientProfilePage({
       <div className="grid grid-cols-1 gap-4">
         {/* Onglets */}
         <Tabs defaultValue="suivi" className="w-full">
-        <TabsList className="grid w-full md:w-3/4 grid-cols-5 bg-gray-100">
+        <TabsList className="grid w-full md:w-3/4 grid-cols-6 bg-gray-100">
           <TabsTrigger 
             value="suivi" 
             className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
@@ -794,6 +795,13 @@ export default function ClientProfilePage({
           >
             <Calendar className="h-4 w-4" />
             <span>Calendrier</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="notes" 
+            className="flex items-center space-x-2 transition-colors hover:bg-gray-200 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Notes</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1028,8 +1036,16 @@ export default function ClientProfilePage({
           </div>
         </TabsContent>
 
+        {/* Contenu de l'onglet Notes */}
+        <TabsContent value="notes" className="space-y-6 mt-6">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Notes personnelles</h3>
+            <ClientNotes clientId={clientId} />
+          </div>
+        </TabsContent>
+
         {/* Contenu de l'onglet Calendrier */}
-        <TabsContent value="calendrier" className="mt-6">
+        <TabsContent value="calendrier" className="space-y-6 mt-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <UpcomingSessions clientId={clientId} isCoach={true} limit={10} />
           </div>
