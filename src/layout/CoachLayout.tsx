@@ -8,14 +8,10 @@ import logoBanner from "../../resources/logo_bannière.png";
 import {
   LogOut,
   User,
-  Calendar,
   Users,
   BarChart2,
-  Settings,
-  MessageSquare,
-  Utensils,
+  Calculator,
 } from "lucide-react";
-import { useState } from "react";
 import CoachMobileNavigation from "@/components/mobile/coach/CoachMobileNavigation";
 
 interface NavItemProps {
@@ -97,6 +93,11 @@ export default function CoachLayout({
 
   const bottomNavItems = [
     { 
+      href: "/coach/tools", 
+      icon: <Calculator size={20} />, 
+      label: "Outils" 
+    },
+    { 
       href: "/coach/profile", 
       icon: <User size={20} />, 
       label: "Profil" 
@@ -131,6 +132,7 @@ export default function CoachLayout({
                 />
               ))}
             </nav>
+            
             <div className="mt-auto">
               {bottomNavItems.map((item) => (
                 <NavItem
