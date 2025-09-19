@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, SyntheticEvent } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import CoachLayout from '@/layout/CoachLayout';
 import { Users, ArrowRight, Loader2, UserPlus, X, Cake } from 'lucide-react';
@@ -165,7 +166,7 @@ export default function CoachClientsPage() {
     );
   }
   return (
-    <div>
+    <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div className="w-full md:w-auto text-center md:text-left">
           <h1 className="text-2xl font-bold text-gray-900">Mes clients</h1>
@@ -236,17 +237,7 @@ export default function CoachClientsPage() {
       </div>
 
       {/* Mobile: list as cards */}
-      <div className="md:hidden space-y-4 pb-6">
-        {/* Mobile action button */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsInviteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white hover:bg-primary/90"
-          >
-            <UserPlus className="h-4 w-4" />
-            Ajouter
-          </button>
-        </div>
+      <div className="md:hidden space-y-3">
         {clients.length === 0 ? (
           <div className="text-center text-sm text-gray-500">Aucun client trouvé</div>
         ) : (
@@ -259,6 +250,7 @@ export default function CoachClientsPage() {
               currentWeight={(client.logs?.[0]?.weight ?? client.current_weight) as number | null}
               startingWeight={client.starting_weight as number | null}
               objectives={client.objectives}
+              profilePictureUrl={client.profile_picture_url}
               logs={(client.logs || []) as any}
             />
           ))
@@ -317,8 +309,25 @@ export default function CoachClientsPage() {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                          {client.profile_picture_url ? (
+                            <Image
+                              src={client.profile_picture_url}
+                              alt={`Photo de profil de ${client.first_name} ${client.last_name}`}
+                              width={40}
+                              height={40}
+                              className="h-full w-full object-cover"
+                              onError={(e: SyntheticEvent<HTMLImageElement, Event>) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '';
+                                target.className = 'h-5 w-5 text-primary';
+                                target.parentElement!.innerHTML = '<Users className="h-5 w-5 text-primary" />';
+                              }}
+                            />
+                          ) : (
+                            <Users className="h-5 w-5 text-primary" />
+                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 flex items-center">

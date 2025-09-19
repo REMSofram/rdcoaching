@@ -2,6 +2,7 @@
 
 ## 📋 Table des matières
 - [Structure des Tables](#-structure-des-tables)
+- [Gestion des Images](#-gestion-des-images)
 - [Relations entre les Tables](#-relations-entre-les-tables)
 - [Politiques de Sécurité (RLS)](#-politiques-de-sécurité-rls)
 - [Triggers et Fonctions](#-triggers-et-fonctions)
@@ -10,6 +11,68 @@
 - [Vues](#-vues)
 
 ## 🏗️ Structure des Tables
+
+### Table: `profiles` (Extrait)
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | UUID | Clé primaire (généré automatiquement avec `gen_random_uuid()`) |
+| `profile_picture_url` | TEXT | URL de l'image de profil (optionnel) |
+| ... | ... | ... |
+
+> **Note** : Le champ `profile_picture_url` contient l'URL complète vers l'image stockée dans Supabase Storage.
+
+## 🖼️ Gestion des Images
+
+### Stockage
+Les images sont stockées dans un bucket Supabase Storage nommé `profile-pictures` avec la structure suivante :
+- **Chemin** : `public/profile-pictures/`
+- **Nom des fichiers** : `{uuid}-{timestamp}.{extension}` (ex: `a0e80fae-05e0-40a1-bb06-1f1a670b22b5-1758297163252.jpg`)
+- **Politique d'accès** : Lecture publique
+
+### Configuration requise
+1. **Créer le bucket dans Supabase Storage** :
+   ```sql
+   -- Créer le bucket s'il n'existe pas
+   insert into storage.buckets (id, name, public) 
+   values ('profile-pictures', 'profile-pictures', true)
+   on conflict (id) do nothing;
+   ```
+
+2. **Définir les politiques d'accès** :
+   ```sql
+   -- Autoriser l'accès public en lecture
+   create policy "Public Access"
+   on storage.objects for select
+   using (bucket_id = 'profile-pictures');
+   ```
+
+### Flux de mise à jour d'une image de profil
+1. Le client télécharge une nouvelle image via l'interface
+2. Le frontend génère un nom de fichier unique : `{user_id}-{timestamp}.{extension}`
+3. L'image est uploadée vers Supabase Storage
+4. L'URL de l'image est mise à jour dans la table `profiles`
+
+### Bonnes pratiques
+- **Validation** : Vérifier le type MIME et la taille des images avant l'upload
+- **Optimisation** : Redimensionner les images côté client avant l'envoi
+- **Nettoyage** : Supprimer les anciennes images après une mise à jour
+- **Sécurité** : Ne jamais stocker de données sensibles dans les métadonnées des images
+
+### Exemple de requête pour mettre à jour une image
+```sql
+-- Mise à jour de l'URL de l'image de profil
+UPDATE public.profiles
+SET profile_picture_url = 'https://xsnadtxqoyqfoqbunzen.supabase.co/storage/v1/object/public/profile-pictures/...',
+    updated_at = now()
+WHERE id = 'user-uuid-here';
+```
+
+### Gestion des erreurs
+En cas d'échec de chargement d'une image :
+1. Le frontend affiche une icône par défaut
+2. L'erreur est journalisée pour analyse
+3. L'utilisateur peut réessayer ou contacter le support
 
 ### Table: `calendar_cards`
 Gère les cartes de calendrier pour le suivi des clients.
@@ -110,6 +173,7 @@ Stocke les informations des utilisateurs (clients et coachs).
 | `sports_practiced` | ARRAY | Liste des sports pratiqués |
 | `objectives` | text | Objectifs de l'utilisateur |
 | `injuries` | text | Blessures ou problèmes de santé connus |
+| `profile_picture_url` | text | URL de la photo de profil de l'utilisateur (optionnel) |
 | `role` | user_role | 'client' ou 'coach' (enum), par défaut 'client' |
 | `is_onboarded` | boolean | Si l'utilisateur a complété l'onboarding (défaut: false) |
 | `created_at` | timestamp with time zone | Date de création |

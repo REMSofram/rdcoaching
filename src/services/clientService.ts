@@ -14,6 +14,7 @@ export interface ClientProfile {
   sports_practiced?: string | string[] | null;
   objectives?: string | null;
   injuries?: string | string[] | null;
+  profile_picture_url?: string | null;
   created_at: string;
   updated_at: string;
   [key: string]: unknown; // Pour les propriétés supplémentaires
@@ -55,29 +56,60 @@ export const fetchClients = async (): Promise<ClientProfile[]> => {
       dataLength: profiles?.length
     });
     
-    if (profiles && profiles.length > 0) {
-      console.log('Exemple de profil:', profiles[0]);
+    if (!profiles || profiles.length === 0) {
+      console.log('Aucun profil client trouvé');
+      return [];
     }
-    console.log('Erreur éventuelle:', error);
     
-    // Vérifier la structure des profils
-    if (profiles && profiles.length > 0) {
-      console.log('Exemple de premier profil:', {
-        keys: Object.keys(profiles[0]),
-        values: profiles[0]
-      });
-      
-      // Vérifier les rôles uniques
-      const roles = [...new Set(profiles.map(p => p.role))];
-      console.log('Rôles uniques trouvés:', roles);
-    }
-
+    // Pour chaque profil, obtenir l'URL signée de l'image de profil si elle existe
+    const profilesWithSignedUrls = await Promise.all(
+      profiles.map(async (profile) => {
+        if (!profile.profile_picture_url) return profile;
+        
+        try {
+          // Vérifier si l'URL contient déjà le préfixe public
+          if (profile.profile_picture_url.includes('supabase.co/storage/v1/object/public/')) {
+            // L'URL est déjà une URL publique, on peut la retourner telle quelle
+            console.log('URL d\'image déjà publique:', profile.profile_picture_url);
+            return profile;
+          }
+          
+          // Si ce n'est pas une URL complète, on suppose que c'est juste le chemin du fichier
+          let filePath = profile.profile_picture_url;
+          
+          // Si le chemin commence par 'profile-pictures/', on le retire pour éviter la duplication
+          if (filePath.startsWith('profile-pictures/')) {
+            filePath = filePath.replace('profile-pictures/', '');
+          }
+          
+          console.log('Génération de l\'URL pour le fichier:', filePath);
+          
+          // Obtenir l'URL publique
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-pictures')
+            .getPublicUrl(filePath);
+            
+          console.log('URL générée:', publicUrl);
+          
+          return {
+            ...profile,
+            profile_picture_url: publicUrl
+          };
+        } catch (error) {
+          console.error('Erreur lors de la génération de l\'URL de l\'image:', error);
+          return profile;
+        }
+      })
+    );
+    
+    console.log('Profils avec URLs signées:', profilesWithSignedUrls);
+    
     if (error) {
       console.error('Error fetching profiles:', error);
       throw error;
     }
 
-    return profiles || [];
+    return profilesWithSignedUrls;
   } catch (error) {
     console.error('Error in fetchClients:', error);
     return [];

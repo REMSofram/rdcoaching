@@ -1,24 +1,100 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { ProfilePicture } from '@/components/shared/ProfilePicture';
+import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
+  const updateProfilePicture = async (url: string) => {
+    if (!user?.id) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ profile_picture_url: url })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating profile picture:', error);
+      toast.error('Erreur lors de la mise à jour de la photo de profil');
+    } else {
+      setProfile((prev: any) => ({
+        ...prev,
+        profile_picture_url: url,
+      }));
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white shadow rounded-lg p-6 text-center">
+          <p className="text-gray-600">Veuillez vous connecter pour voir votre profil</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Mon Profil Coach
-          </h1>
-          {user ? (
-            <p className="text-gray-600 text-lg">
-              Connecté en tant que : <span className="font-medium">{user.email}</span>
-            </p>
-          ) : (
-            <p className="text-gray-600 text-lg">Non connecté</p>
-          )}
+        <div className="flex flex-col items-center md:flex-row md:items-start gap-8">
+          <div className="flex-shrink-0">
+            <ProfilePicture
+              userId={user.id}
+              currentPictureUrl={profile?.profile_picture_url}
+              onPictureUpdate={updateProfilePicture}
+              size="lg"
+            />
+          </div>
+          
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {profile?.first_name || 'Coach'}
+            </h1>
+            <p className="text-lg text-blue-600 font-medium mb-4">Coach Sportif</p>
+            
+            <div className="mt-4 space-y-2 text-gray-600">
+              <p><span className="font-medium">Email :</span> {user.email}</p>
+              {profile?.phone && (
+                <p><span className="font-medium">Téléphone :</span> {profile.phone}</p>
+              )}
+              {profile?.specialty && (
+                <p><span className="font-medium">Spécialité :</span> {profile.specialty}</p>
+              )}
+              {profile?.bio && (
+                <div className="mt-4">
+                  <h3 className="font-medium text-gray-900 mb-2">À propos de moi</h3>
+                  <p className="text-gray-600">{profile.bio}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@
 - [Installation](#-installation)
 - [Configuration](#-configuration)
 - [Structure du Projet](#-structure-du-projet)
+- [Gestion des Images](#-gestion-des-images)
 - [Déploiement](#-déploiement)
 - [Base de Données et Backend](#-base-de-données-et-backend)
 - [Sécurité](#-sécurité)
@@ -82,7 +83,7 @@
 
 ## 📁 Structure du Projet
 
-```
+```bash
 rdcoaching/
 ├── public/           # Fichiers statiques
 ├── src/
@@ -94,6 +95,57 @@ rdcoaching/
 ├── migrations/       # Scripts de migration de base de données
 └── public/           # Fichiers statiques
 ```
+
+## 🖼️ Gestion des Images
+
+### Stockage
+- Les images de profil sont stockées dans un bucket Supabase Storage nommé `profile-pictures`
+- Accès public en lecture via des URLs directes
+- Format des noms de fichiers : `{uuid}-{timestamp}.{extension}`
+
+### Configuration Next.js
+```typescript
+// next.config.ts
+export default {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'xsnadtxqoyqfoqbunzen.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/profile-pictures/**',
+      },
+    ],
+  },
+};
+```
+
+### Utilisation dans les composants
+```tsx
+import Image from 'next/image';
+
+// Afficher une image de profil
+<Image
+  src={user.profile_picture_url}
+  alt={`Photo de ${user.first_name}`}
+  width={40}
+  height={40}
+  className="rounded-full"
+  onError={(e) => {
+    // Gestion des erreurs de chargement
+    const target = e.target as HTMLImageElement;
+    target.onerror = null;
+    target.src = '';
+    target.className = 'h-5 w-5 text-primary';
+    target.parentElement!.innerHTML = '<UserIcon />';
+  }}
+/>
+
+### Bonnes pratiques
+- Utiliser le composant `Image` de Next.js pour l'optimisation automatique
+- Toujours spécifier les dimensions pour éviter les décalages de mise en page
+- Prévoir un fallback visuel en cas d'erreur de chargement
+- Utiliser des tailles appropriées pour les différentes vues (mobile/desktop)
 
 ## 🚀 Déploiement
 

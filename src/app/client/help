@@ -1,0 +1,43 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function HelpPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Aide & Support</CardTitle>
+          <CardDescription>
+            Page en cours de développement
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="bg-amber-100 p-4 rounded-full mb-4">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="48" 
+                height="48" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="text-amber-600"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Page en construction</h2>
+            <p className="text-gray-600 text-center max-w-md">
+              La section d'aide et support sera bientôt disponible.
+              Merci de votre compréhension.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

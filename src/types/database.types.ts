@@ -158,6 +158,7 @@ export type Database = {
           last_name: string | null
           objectives: string | null
           phone: string | null
+          profile_picture_url: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           sports_practiced: string[] | null
           starting_weight: number | null
@@ -175,6 +176,7 @@ export type Database = {
           last_name?: string | null
           objectives?: string | null
           phone?: string | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           sports_practiced?: string[] | null
           starting_weight?: number | null
@@ -192,6 +194,7 @@ export type Database = {
           last_name?: string | null
           objectives?: string | null
           phone?: string | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           sports_practiced?: string[] | null
           starting_weight?: number | null
