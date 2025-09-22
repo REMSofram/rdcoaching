@@ -68,6 +68,8 @@ import { MetricsSummary } from '@/components/tracking/MetricsSummary';
 import { RichTextViewer } from '@/components/shared/RichTextViewer';
 import { LogsAndChartTabs } from '@/components/tracking/LogsAndChartTabs';
 import { ClientNotes } from '@/components/client/ClientNotes';
+import Image from 'next/image';
+import { User } from 'lucide-react';
 
 export default function ClientProfilePage({
   params,
@@ -607,7 +609,7 @@ export default function ClientProfilePage({
       </DialogContent>
     </Dialog>
   );
-  };
+};
 
   return (
     <div className="space-y-6">
@@ -617,12 +619,36 @@ export default function ClientProfilePage({
             <ArrowLeft className="mr-1 h-4 w-4" /> Retour à la liste des clients
           </Link>
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {profile.first_name} {profile.last_name}
-            </h1>
-            <span className="text-sm text-gray-500">
-              {calculateAge(profile.birth_date)} ans
-            </span>
+            <div className="flex items-center gap-4">
+              {profile.profile_picture_url ? (
+                <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-slate-200 flex-shrink-0">
+                  <Image
+                    src={profile.profile_picture_url}
+                    alt={`${profile.first_name} ${profile.last_name}`}
+                    width={48}
+                    height={48}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <User className="h-6 w-6 text-slate-400" />
+                </div>
+              )}
+              <div className="pt-1">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {profile.first_name} {profile.last_name}
+                </h1>
+                <span className="text-sm text-gray-500">
+                  {calculateAge(profile.birth_date)} ans
+                </span>
+              </div>
+            </div>
           </div>
           <p className="text-sm text-gray-500">
             {profile.email} • {profile.phone}
