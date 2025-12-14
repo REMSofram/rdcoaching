@@ -74,16 +74,46 @@ export async function middleware(request: NextRequest) {
 
   // Si l'utilisateur est connecté
   if (session) {
+    // Exception pour le compte coach principal
+    if (session.user.email === 'remy.denay6@gmail.com') {
+      return NextResponse.next();
+    }
+    
+    // Ajouter des en-têtes de débogage
+    const debugHeaders = new Headers(response.headers);
+    debugHeaders.set('x-debug-user-id', session.user.id);
+    debugHeaders.set('x-debug-user-email', session.user.email || 'no-email');
+    
     // Récupérer le profil utilisateur
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('is_onboarded')
+      .select('*')
       .eq('id', session.user.id)
       .single();
 
+    // Ajouter des informations de débogage sur le profil
+    debugHeaders.set('x-debug-has-profile', profile ? 'true' : 'false');
+    debugHeaders.set('x-debug-is-onboarded', profile?.is_onboarded ? 'true' : 'false');
+    debugHeaders.set('x-debug-profile-error', profileError?.message || 'no-error');
+
     // Si le profil n'existe pas ou si l'onboarding n'est pas complété
     // et que l'utilisateur n'est pas déjà sur la page d'onboarding ou de création de compte
-    if ((!profile || !profile.is_onboarded) && url.pathname !== '/onboarding' && url.pathname !== '/auth/create-account' && !url.pathname.startsWith('/_next/')) {
+    if ((!profile || profile.is_onboarded === false) && url.pathname !== '/onboarding' && url.pathname !== '/auth/create-account' && !url.pathname.startsWith('/_next/')) {
+      // Ajouter plus d'informations de débogage
+      debugHeaders.set('x-debug-redirect-reason', 'onboarding-required');
+      debugHeaders.set('x-debug-profile-data', JSON.stringify(profile || {}));
+      
+      // Créer une nouvelle réponse avec les en-têtes de débogage
+      const newResponse = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+      
+      // Copier les en-têtes de débogage vers la nouvelle réponse
+      debugHeaders.forEach((value, key) => {
+        newResponse.headers.set(key, value);
+      });
       // Rediriger vers la page d'onboarding
       const onboardingUrl = new URL('/onboarding', request.url);
       // Si l'utilisateur était sur une autre page, on la sauvegarde pour rediriger après l'onboarding

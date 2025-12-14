@@ -4,12 +4,15 @@ import { useEffect, useState, SyntheticEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import CoachLayout from '@/layout/CoachLayout';
-import { Users, ArrowRight, Loader2, UserPlus, X, Cake } from 'lucide-react';
+import { Users, ArrowRight, Loader2, UserPlus, X, Cake, Tag, Plus } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { fetchClients, fetchClientLogs, ClientProfile } from '@/services/clientService';
 import LogStatusIndicator from '@/components/tracking/LogStatusIndicator';
 import ClientCard from '@/components/mobile/coach/ClientCard';
 import { useNotification } from '@/contexts/NotificationContext';
+import { ClientTags } from '@/components/shared/ClientTags';
+import { EditableTags } from '@/components/shared/EditableTags';
+import { createClient } from '@/utils/supabase/client';
 
 // Type pour les données des clients
 // Fonction pour vérifier si c'est l'anniversaire du client
@@ -46,18 +49,245 @@ type ClientLogsWithLastWeight = Array<{
 
 type Client = ClientProfile & {
   logs: ClientLogsWithLastWeight;
+  types?: string[];
 };
 
 export default function CoachClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const { showNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(true);
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const router = useRouter();
-  const { showNotification } = useNotification();
+  const supabase = createClient();
 
+  // Charger l'utilisateur actuel
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement de l\'utilisateur:', error);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+    
+    loadUser();
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const loadAvailableTags = async () => {
+      try {
+
+        // 1. Récupérer les tags du coach
+        const { data: coachData } = await supabase
+          .from('profiles')
+          .select('available_tags')
+          .eq('id', currentUser.id)
+          .single();
+
+        // 2. Récupérer tous les tags utilisés par les clients
+        const { data: clientsData } = await supabase
+          .from('profiles')
+          .select('types')
+          .not('types', 'is', null);
+
+        // 3. Extraire tous les tags uniques des clients
+        const allClientTags = new Set<string>();
+        clientsData?.forEach(client => {
+          if (client.types && Array.isArray(client.types)) {
+            client.types.forEach((tag: string) => allClientTags.add(tag));
+          }
+        });
+
+        // 4. Combiner avec les tags du coach
+        const defaultTags = [
+          'Actif',
+          'Inactif',
+          'Course',
+          'Musculation',
+          'Perte de poids',
+          'Prise de masse',
+          'Débutant',
+          'Intermédiaire',
+          'Avancé'
+        ];
+
+        // 5. Fusionner tous les tags (ceux du coach + ceux des clients + valeurs par défaut)
+        const allTags = [
+          ...(coachData?.available_tags || []),
+          ...Array.from(allClientTags),
+          ...defaultTags
+        ];
+
+        // 6. Éliminer les doublons et trier
+        const uniqueTags = Array.from(new Set(allTags)).sort();
+
+        // 7. Mettre à jour l'état local
+        setAvailableTags(uniqueTags);
+        
+        // 8. Mettre à jour les tags disponibles du coach s'ils sont différents
+        if (JSON.stringify(coachData?.available_tags || []) !== JSON.stringify(uniqueTags)) {
+          await supabase
+            .from('profiles')
+            .update({ available_tags: uniqueTags })
+            .eq('id', currentUser.id);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des tags disponibles:', error);
+      }
+    };
+
+    loadAvailableTags();
+    
+    // Configurer un abonnement aux changements de la table profiles
+    const subscription = supabase
+      .channel('profiles_changes')
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'profiles',
+          filter: 'types=not.is.null'
+        }, 
+        (payload) => {
+          console.log('Changement détecté dans les tags:', payload);
+          loadAvailableTags(); // Recharger les tags
+        }
+      )
+      .subscribe();
+
+    // Nettoyer l'abonnement lors du démontage du composant
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const updateAvailableTags = async (newTags: string[]) => {
+    if (!currentUser?.id) {
+      console.error('Aucun utilisateur connecté');
+      return;
+    }
+    
+    try {
+      console.log('Mise à jour des tags disponibles:', newTags);
+      
+      // S'assurer que les tags sont uniques
+      const uniqueTags = Array.from(new Set(newTags));
+      
+      // Utiliser une fonction RPC pour la mise à jour des tags
+      const { data, error } = await supabase.rpc('update_available_tags', {
+        p_user_id: currentUser.id,
+        p_tags: uniqueTags
+      });
+      
+      if (error) {
+        console.error('Erreur lors de la mise à jour des tags disponibles:', error);
+        throw error;
+      }
+      
+      if (data) {
+        setAvailableTags(data || []);
+        console.log('Tags disponibles mis à jour avec succès:', data);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des tags disponibles:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteTag = async (tagToDelete: string) => {
+    if (!currentUser?.id) {
+      console.error('Aucun utilisateur connecté');
+      showNotification('Erreur: Utilisateur non connecté');
+      return;
+    }
+    
+    try {
+      // 1. Mettre à jour les tags disponibles en retirant le tag supprimé
+      const updatedAvailableTags = availableTags.filter(tag => tag !== tagToDelete);
+      
+      // 2. Mettre à jour la base de données avec les nouveaux tags disponibles
+      await updateAvailableTags(updatedAvailableTags);
+      
+      // 3. Mettre à jour les clients qui ont ce tag
+      const { data: clientsWithTag, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, types')
+        .contains('types', [tagToDelete]);
+        
+      if (fetchError) throw fetchError;
+      
+      // 4. Mettre à jour chaque client qui avait ce tag
+      if (clientsWithTag && clientsWithTag.length > 0) {
+        const updates = clientsWithTag.map(client => {
+          const updatedTags = (client.types || []).filter((tag: string) => tag !== tagToDelete);
+          return supabase
+            .from('profiles')
+            .update({ types: updatedTags })
+            .eq('id', client.id);
+        });
+        
+        // Attendre que toutes les mises à jour soient terminées
+        const results = await Promise.all(updates);
+        const errors = results.filter(result => result.error);
+        
+        if (errors.length > 0) {
+          throw new Error(`Erreur lors de la mise à jour de ${errors.length} clients`);
+        }
+      }
+      
+      // 5. Mettre à jour l'état local
+      setClients(prevClients => 
+        prevClients.map(client => ({
+          ...client,
+          types: client.types?.filter(tag => tag !== tagToDelete) || []
+        }))
+      );
+      
+      console.log(`Tag "${tagToDelete}" supprimé avec succès`);
+      showNotification('Tag supprimé avec succès');
+      
+      // Recharger les données pour s'assurer que tout est à jour
+      const { data: coachData } = await supabase
+        .from('profiles')
+        .select('available_tags')
+        .eq('id', currentUser.id)
+        .single();
+        
+      if (coachData) {
+        setAvailableTags(coachData.available_tags || []);
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors de la suppression du tag:', error);
+      showNotification('Erreur lors de la suppression du tag');
+    }
+  };
+
+  // Récupérer l'utilisateur actuel
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    
+    getCurrentUser();
+  }, [supabase]);
+  
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -83,14 +313,13 @@ export default function CoachClientsPage() {
               ...client,
               // Si lastWeight est défini, on l'utilise comme poids actuel
               current_weight: logs.lastWeight ?? client.current_weight,
-              logs: logs || []
+              logs: logs || [],
+              types: client.types || [] // S'assurer que types est toujours un tableau
             };
           })
         );
         
-        console.log('Clients avec logs:', clientsWithLogs);
-        // Type-only adaptation: the logs shape returned by service differs slightly from the local type.
-        // This cast preserves runtime behavior without changing business logic.
+        console.log('Clients avec logs et tags:', clientsWithLogs);
         setClients(clientsWithLogs as unknown as Client[]);
       } catch (error) {
         console.error('Error loading clients:', error);
@@ -112,7 +341,8 @@ export default function CoachClientsPage() {
           return {
             ...client,
             current_weight: logs.lastWeight ?? client.current_weight,
-            logs: logs || []
+            logs: logs || [],
+            types: client.types || []
           } as Client;
         })
       );
@@ -273,6 +503,15 @@ export default function CoachClientsPage() {
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
+                  <div className="flex items-center gap-1">
+                    <Tag className="h-4 w-4" />
+                    Tags
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Poids actuel
                 </th>
                 <th
@@ -295,7 +534,7 @@ export default function CoachClientsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {clients.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
                     Aucun client trouvé
                   </td>
                 </tr>
@@ -309,28 +548,23 @@ export default function CoachClientsPage() {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                        <div className="flex-shrink-0 h-10 w-10">
                           {client.profile_picture_url ? (
                             <Image
+                              className="h-10 w-10 rounded-full"
                               src={client.profile_picture_url}
-                              alt={`Photo de profil de ${client.first_name} ${client.last_name}`}
+                              alt={`${client.first_name} ${client.last_name}`}
                               width={40}
                               height={40}
-                              className="h-full w-full object-cover"
-                              onError={(e: SyntheticEvent<HTMLImageElement, Event>) => {
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null;
-                                target.src = '';
-                                target.className = 'h-5 w-5 text-primary';
-                                target.parentElement!.innerHTML = '<Users className="h-5 w-5 text-primary" />';
-                              }}
                             />
                           ) : (
-                            <Users className="h-5 w-5 text-primary" />
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <Users className="h-5 w-5 text-gray-500" />
+                            </div>
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 flex items-center">
+                          <div className="text-sm font-medium text-gray-900">
                             {client.first_name} {client.last_name}
                             {isBirthdayToday(client.birth_date) && (
                               <Cake className="ml-2 h-4 w-4 text-blue-800" />
@@ -338,6 +572,87 @@ export default function CoachClientsPage() {
                           </div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <EditableTags 
+                        tags={client.types || []} 
+                        availableTags={availableTags}
+                        onDeleteTag={handleDeleteTag}
+                        onSave={async (newTags) => {
+                          try {
+                            console.log('Mise à jour des tags pour le client:', client.id, 'Nouveaux tags:', newTags);
+                            
+                            // S'assurer que les tags sont uniques
+                            const uniqueNewTags = Array.from(new Set(newTags));
+                            
+                            // 1. Mettre à jour les tags du client
+                            const { error: updateError } = await supabase
+                              .from('profiles')
+                              .update({ 
+                                types: uniqueNewTags,
+                                updated_at: new Date().toISOString()
+                              })
+                              .eq('id', client.id);
+                            
+                            if (updateError) {
+                              console.error('Erreur lors de la mise à jour des tags du client:', updateError);
+                              throw updateError;
+                            }
+                            
+                            // 2. Vérifier s'il y a de nouveaux tags à ajouter aux tags disponibles
+                            const newUniqueTags = uniqueNewTags.filter(tag => 
+                              !availableTags.includes(tag)
+                            );
+                            
+                            // 3. Si de nouveaux tags ont été ajoutés, mettre à jour availableTags
+                            if (newUniqueTags.length > 0) {
+                              console.log('Nouveaux tags détectés, mise à jour des tags disponibles...');
+                              const updatedAvailableTags = [...availableTags, ...newUniqueTags];
+                              await updateAvailableTags(updatedAvailableTags);
+                            }
+                            
+                            // 4. Mettre à jour l'état local
+                            setClients(prevClients => 
+                              prevClients.map(c => 
+                                c.id === client.id 
+                                  ? { ...c, types: uniqueNewTags } 
+                                  : c
+                              )
+                            );
+                            
+                            console.log('Tags mis à jour avec succès pour le client:', client.id);
+                            showNotification('Tags mis à jour avec succès');
+                            
+                          } catch (error) {
+                            console.error('Erreur lors de la mise à jour des tags:', error);
+                            showNotification('Erreur lors de la mise à jour des tags');
+                            
+                            // Recharger les tags depuis la base de données en cas d'erreur
+                            try {
+                              const { data: clientData, error: fetchError } = await supabase
+                                .from('profiles')
+                                .select('types')
+                                .eq('id', client.id)
+                                .single();
+                                
+                              if (!fetchError && clientData) {
+                                setClients(prevClients => 
+                                  prevClients.map(c => 
+                                    c.id === client.id 
+                                      ? { ...c, types: clientData.types || [] } 
+                                      : c
+                                  )
+                                );
+                              }
+                            } catch (reloadError) {
+                              console.error('Erreur lors du rechargement des tags:', reloadError);
+                            }
+                            
+                            // Relancer l'erreur pour qu'elle soit gérée par le composant parent si nécessaire
+                            throw error;
+                          }
+                        }}
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">

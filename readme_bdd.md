@@ -18,6 +18,8 @@
 |---------|------|-------------|
 | `id` | UUID | Clé primaire (généré automatiquement avec `gen_random_uuid()`) |
 | `profile_picture_url` | TEXT | URL de l'image de profil (optionnel) |
+| `types` | TEXT[] | Tableau de tags pour catégoriser les profils (ex: ["Actif", "Musculation"]) |
+| `available_tags` | TEXT[] | Tableau de tags disponibles pour le coach (géré côté client) |
 | ... | ... | ... |
 
 > **Note** : Le champ `profile_picture_url` contient l'URL complète vers l'image stockée dans Supabase Storage.
